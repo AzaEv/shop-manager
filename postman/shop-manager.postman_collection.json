@@ -1,0 +1,238 @@
+{
+  "info": {
+    "name": "Shop Manager",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "productId", "value": "1" },
+    { "key": "orderId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Catalog",
+      "item": [
+        {
+          "name": "List categories",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/categories"
+          }
+        },
+        {
+          "name": "List products",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/products"
+          }
+        },
+        {
+          "name": "Get product",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Search and sort products",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/products?q=nova&sort=PRICE&dir=desc"
+          }
+        },
+        {
+          "name": "Admin delete product",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin@shop.local", "type": "string" },
+                { "key": "password", "value": "admin123", "type": "string" }
+              ]
+            },
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/admin/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Admin analytics report",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin@shop.local", "type": "string" },
+                { "key": "password", "value": "admin123", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/report"
+          }
+        },
+        {
+          "name": "Admin create product",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin@shop.local", "type": "string" },
+                { "key": "password", "value": "admin123", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryId\": 1,\n  \"name\": \"Nova Mini\",\n  \"sku\": \"PHN-MINI\",\n  \"description\": \"Компактный смартфон\",\n  \"price\": 19990.00,\n  \"stock\": 10,\n  \"active\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/products"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new.buyer@shop.local\",\n  \"name\": \"Новый покупатель\",\n  \"phone\": \"+70000000002\",\n  \"password\": \"buyer123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          }
+        },
+        {
+          "name": "List customers (admin)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin@shop.local", "type": "string" },
+                { "key": "password", "value": "admin123", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/customers"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get cart",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "customer@shop.local", "type": "string" },
+                { "key": "password", "value": "customer123", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/cart"
+          }
+        },
+        {
+          "name": "Add to cart",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "customer@shop.local", "type": "string" },
+                { "key": "password", "value": "customer123", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 1,\n  \"quantity\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/cart/items"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Checkout",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "customer@shop.local", "type": "string" },
+                { "key": "password", "value": "customer123", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"Москва, Тверская 1\"\n}"
+            },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "My orders",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "customer@shop.local", "type": "string" },
+                { "key": "password", "value": "customer123", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "Change status (admin)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin@shop.local", "type": "string" },
+                { "key": "password", "value": "admin123", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PAID\"\n}"
+            },
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/status"
+          }
+        },
+        {
+          "name": "Invalid status transition",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin@shop.local", "type": "string" },
+                { "key": "password", "value": "admin123", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DELIVERED\"\n}"
+            },
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/status"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1>Мои заказы</h1>
+    <table th:if="${!#lists.isEmpty(orders)}">
+        <thead>
+        <tr><th>№</th><th>Дата</th><th>Статус</th><th>Сумма</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="order : ${orders}">
+            <td><a th:href="@{/orders/{id}(id=${order.id})}" th:text="${order.id}"></a></td>
+            <td th:text="${#temporals.format(order.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
+            <td><span class="status" th:text="${order.status}"></span></td>
+            <td th:text="${#numbers.formatDecimal(order.total, 1, 2)} + ' ₽'"></td>
+        </tr>
+        </tbody>
+    </table>
+    <p th:if="${#lists.isEmpty(orders)}" class="muted">Заказов пока нет.</p>
+</main>
+</body>
+</html>

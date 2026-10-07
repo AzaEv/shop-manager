@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <nav class="admin-nav">
+        <a href="/admin/report">Отчёт</a>
+        <a class="active" href="/admin/orders">Заказы</a>
+        <a href="/admin/products">Товары</a>
+        <a href="/admin/customers">Клиенты</a>
+    </nav>
+    <h1>Заказы</h1>
+    <div class="filters">
+        <a th:classappend="${selectedStatus == null} ? ' active'" href="/admin/orders">Все</a>
+        <a th:each="st : ${statuses}"
+           th:href="@{/admin/orders(status=${st})}"
+           th:text="${st}"
+           th:classappend="${selectedStatus == st} ? ' active'"></a>
+    </div>
+    <table>
+        <thead>
+        <tr><th>№</th><th>Клиент</th><th>Статус</th><th>Сумма</th><th>Дата</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="order : ${orders}">
+            <td><a th:href="@{/admin/orders/{id}(id=${order.id})}" th:text="${order.id}"></a></td>
+            <td th:text="${order.customer.email}"></td>
+            <td><span class="status" th:text="${order.status}"></span></td>
+            <td th:text="${#numbers.formatDecimal(order.total, 1, 2)}"></td>
+            <td th:text="${#temporals.format(order.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

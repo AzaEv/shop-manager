@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1>Корзина</h1>
+    <table th:if="${!#lists.isEmpty(cart.items)}">
+        <thead>
+        <tr><th>Товар</th><th>Цена</th><th>Кол-во</th><th></th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${cart.items}">
+            <td th:text="${item.product.name}"></td>
+            <td th:text="${#numbers.formatDecimal(item.product.price, 1, 2)}"></td>
+            <td>
+                <form th:action="@{/cart/items/{id}(id=${item.product.id})}" method="post" class="inline">
+                    <input type="number" name="quantity" min="0" th:value="${item.quantity}">
+                    <button type="submit">Обновить</button>
+                </form>
+            </td>
+            <td>
+                <form th:action="@{/cart/items/{id}/delete(id=${item.product.id})}" method="post">
+                    <button type="submit" class="ghost">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p class="price" th:if="${!#lists.isEmpty(cart.items)}" th:text="'Итого: ' + ${#numbers.formatDecimal(total, 1, 2)} + ' ₽'"></p>
+    <a class="button" href="/checkout" th:if="${!#lists.isEmpty(cart.items)}">Оформить заказ</a>
+    <p th:if="${#lists.isEmpty(cart.items)}" class="muted">Корзина пуста. <a href="/">В каталог</a></p>
+</main>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap narrow">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <p><a href="/admin/orders">← К заказам</a></p>
+    <h1 th:text="'Заказ №' + ${order.id}"></h1>
+    <p th:text="'Клиент: ' + ${order.customer.name} + ' (' + ${order.customer.email} + ')'"></p>
+    <p th:text="'Адрес: ' + ${order.address}"></p>
+    <p>Текущий статус: <span class="status" th:text="${order.status}"></span></p>
+    <form th:action="@{/admin/orders/{id}/status(id=${order.id})}" method="post" class="inline-form">
+        <select name="status">
+            <option th:each="st : ${statuses}"
+                    th:value="${st}"
+                    th:text="${st}"
+                    th:selected="${st == order.status}"
+                    th:disabled="${st != order.status and !order.status.canTransitionTo(st)}"></option>
+        </select>
+        <button type="submit">Сменить статус</button>
+    </form>
+    <table>
+        <thead>
+        <tr><th>Товар</th><th>SKU</th><th>Цена</th><th>Кол-во</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${order.items}">
+            <td th:text="${item.productName}"></td>
+            <td th:text="${item.sku}"></td>
+            <td th:text="${#numbers.formatDecimal(item.unitPrice, 1, 2)}"></td>
+            <td th:text="${item.quantity}"></td>
+        </tr>
+        </tbody>
+    </table>
+    <p class="price" th:text="'Итого: ' + ${#numbers.formatDecimal(order.total, 1, 2)} + ' ₽'"></p>
+    <h2>История</h2>
+    <ul>
+        <li th:each="h : ${order.history}"
+            th:text="${(h.fromStatus != null ? h.fromStatus : '—')} + ' → ' + ${h.toStatus} + ' · ' + ${#temporals.format(h.changedAt, 'dd.MM.yyyy HH:mm')}"></li>
+    </ul>
+</main>
+</body>
+</html>

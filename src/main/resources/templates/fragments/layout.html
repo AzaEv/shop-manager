@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(pageTitle)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle} + ' · Shop Manager'">Shop Manager</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:fragment="header" class="top">
+    <a class="brand" href="/">Shop Manager</a>
+    <nav>
+        <a href="/">Каталог</a>
+        <a href="/cart" sec:authorize="isAuthenticated()">Корзина</a>
+        <a href="/orders" sec:authorize="isAuthenticated()">Заказы</a>
+        <a href="/admin" sec:authorize="hasRole('ADMIN')">Админка</a>
+        <a href="/admin/report" sec:authorize="hasRole('ADMIN')">Отчёт</a>
+    </nav>
+    <div class="account">
+        <span sec:authorize="isAuthenticated()" sec:authentication="name"></span>
+        <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post">
+            <button type="submit">Выйти</button>
+        </form>
+        <a href="/login" sec:authorize="!isAuthenticated()">Войти</a>
+        <a href="/register" sec:authorize="!isAuthenticated()">Регистрация</a>
+    </div>
+</header>
+<div th:fragment="flash" class="flash-wrap">
+    <p class="flash ok" th:if="${message}" th:text="${message}"></p>
+    <p class="flash err" th:if="${error}" th:text="${error}"></p>
+</div>
+</body>
+</html>

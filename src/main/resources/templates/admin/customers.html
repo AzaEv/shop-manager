@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <nav class="admin-nav">
+        <a href="/admin/report">Отчёт</a>
+        <a href="/admin/orders">Заказы</a>
+        <a href="/admin/products">Товары</a>
+        <a class="active" href="/admin/customers">Клиенты</a>
+    </nav>
+    <h1>Клиенты</h1>
+    <form class="search-bar" method="get" th:action="@{/admin/customers}">
+        <input type="search" name="q" placeholder="Поиск по имени или email" th:value="${q}">
+        <button type="submit">Найти</button>
+    </form>
+    <table>
+        <thead>
+        <tr><th>Имя</th><th>Email</th><th>Телефон</th><th>Роль</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="customer : ${customers}">
+            <td th:text="${customer.name}"></td>
+            <td th:text="${customer.email}"></td>
+            <td th:text="${customer.phone}"></td>
+            <td th:text="${customer.role}"></td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

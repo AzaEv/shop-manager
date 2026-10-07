@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap narrow">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <p class="muted"><a href="/">← Каталог</a></p>
+    <h1 th:text="${product.name}">Товар</h1>
+    <p class="muted" th:text="${product.category.name} + ' · SKU ' + ${product.sku}"></p>
+    <p th:text="${product.description}"></p>
+    <p class="price" th:text="${#numbers.formatDecimal(product.price, 1, 2)} + ' ₽'"></p>
+    <p th:text="'В наличии: ' + ${product.stock}"></p>
+    <form th:action="@{/cart/items}" method="post" sec:authorize="isAuthenticated()">
+        <input type="hidden" name="productId" th:value="${product.id}">
+        <label>Количество
+            <input type="number" name="quantity" min="1" th:max="${product.stock}" value="1">
+        </label>
+        <button type="submit">В корзину</button>
+    </form>
+    <a href="/login" sec:authorize="!isAuthenticated()">Войдите, чтобы купить</a>
+</main>
+</body>
+</html>

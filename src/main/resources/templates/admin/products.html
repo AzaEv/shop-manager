@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <nav class="admin-nav">
+        <a href="/admin/report">Отчёт</a>
+        <a href="/admin/orders">Заказы</a>
+        <a class="active" href="/admin/products">Товары</a>
+        <a href="/admin/customers">Клиенты</a>
+    </nav>
+    <h1>Товары</h1>
+    <p><a class="button" href="/admin/products/new">Новый товар</a></p>
+    <form class="search-bar" method="get" th:action="@{/admin/products}">
+        <input type="search" name="q" placeholder="Поиск товара" th:value="${q}">
+        <select name="categoryId">
+            <option value="">Все категории</option>
+            <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"
+                    th:selected="${selectedCategoryId == category.id}"></option>
+        </select>
+        <select name="sort">
+            <option value="NAME" th:selected="${sort == 'NAME'}">Название</option>
+            <option value="PRICE" th:selected="${sort == 'PRICE'}">Цена</option>
+            <option value="STOCK" th:selected="${sort == 'STOCK'}">Остаток</option>
+        </select>
+        <select name="dir">
+            <option value="asc" th:selected="${dir == 'asc'}">Возрастание</option>
+            <option value="desc" th:selected="${dir == 'desc'}">Убывание</option>
+        </select>
+        <button type="submit">Применить</button>
+    </form>
+    <form class="inline-form" th:action="@{/admin/categories}" method="post">
+        <input name="name" placeholder="Категория" required>
+        <input name="slug" placeholder="slug" required>
+        <button type="submit">Добавить категорию</button>
+    </form>
+    <div class="cat-list">
+        <form th:each="category : ${categories}" th:action="@{/admin/categories/{id}/delete(id=${category.id})}" method="post" class="inline">
+            <span th:text="${category.name} + ' (' + ${category.slug} + ')'"></span>
+            <button type="submit" class="ghost" onclick="return confirm('Удалить категорию, если в ней нет товаров?')">Удалить</button>
+        </form>
+    </div>
+    <table>
+        <thead>
+        <tr><th>SKU</th><th>Название</th><th>Категория</th><th>Цена</th><th>Остаток</th><th>Активен</th><th></th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="product : ${products}">
+            <td th:text="${product.sku}"></td>
+            <td th:text="${product.name}"></td>
+            <td th:text="${product.category.name}"></td>
+            <td th:text="${#numbers.formatDecimal(product.price, 1, 2)}"></td>
+            <td th:text="${product.stock}"></td>
+            <td th:text="${product.active} ? 'да' : 'нет'"></td>
+            <td class="actions">
+                <a th:href="@{/admin/products/{id}/edit(id=${product.id})}">Изменить</a>
+                <form th:action="@{/admin/products/{id}/delete(id=${product.id})}" method="post">
+                    <button type="submit" class="ghost" onclick="return confirm('Удалить товар?')">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap narrow">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1>Регистрация</h1>
+    <form th:action="@{/register}" method="post">
+        <label>Имя
+            <input type="text" name="name" required>
+        </label>
+        <label>Email
+            <input type="email" name="email" required>
+        </label>
+        <label>Телефон
+            <input type="text" name="phone">
+        </label>
+        <label>Пароль
+            <input type="password" name="password" required minlength="6">
+        </label>
+        <button type="submit">Создать аккаунт</button>
+    </form>
+</main>
+</body>
+</html>

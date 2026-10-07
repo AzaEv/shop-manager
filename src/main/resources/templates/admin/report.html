@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <nav class="admin-nav">
+        <a class="active" href="/admin/report">Отчёт</a>
+        <a href="/admin/orders">Заказы</a>
+        <a href="/admin/products">Товары</a>
+        <a href="/admin/customers">Клиенты</a>
+    </nav>
+    <h1>Аналитический отчёт по продажам</h1>
+    <p class="muted">Выручка считается по всем заказам, кроме отменённых. Средний чек — выручка, делённая на число неотменённых заказов.</p>
+    <section class="kpis">
+        <article class="kpi"><span>Клиенты</span><strong th:text="${report.customerCount}">0</strong></article>
+        <article class="kpi"><span>Товары</span><strong th:text="${report.productCount}">0</strong></article>
+        <article class="kpi"><span>Заказы</span><strong th:text="${report.orderCount}">0</strong></article>
+        <article class="kpi"><span>Отменено</span><strong th:text="${report.cancelledCount}">0</strong></article>
+        <article class="kpi"><span>Выручка</span><strong th:text="${#numbers.formatDecimal(report.revenue, 1, 2)} + ' ₽'">0</strong></article>
+        <article class="kpi"><span>Средний чек</span><strong th:text="${#numbers.formatDecimal(report.averageCheck, 1, 2)} + ' ₽'">0</strong></article>
+    </section>
+    <h2>Заказы по статусам</h2>
+    <table>
+        <thead>
+        <tr><th>Статус</th><th>Число заказов</th><th>Сумма</th><th>Доля выручки</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="row : ${report.byStatus}">
+            <td th:text="${row.status}"></td>
+            <td th:text="${row.orderCount}"></td>
+            <td th:text="${#numbers.formatDecimal(row.amount, 1, 2)} + ' ₽'"></td>
+            <td>
+                <div class="bar"><span th:style="'width:' + ${row.percentOfRevenue} + '%'"></span></div>
+                <small th:text="${row.percentOfRevenue} + '%'"></small>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <h2>Топ товаров по сумме продаж</h2>
+    <p th:if="${#lists.isEmpty(report.topProducts)}" class="muted">Пока нет продаж — оформите заказ, чтобы появилась статистика.</p>
+    <table th:if="${!#lists.isEmpty(report.topProducts)}">
+        <thead>
+        <tr><th>Товар</th><th>Продано, шт.</th><th>Сумма</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="row : ${report.topProducts}">
+            <td th:text="${row.productName}"></td>
+            <td th:text="${row.quantity}"></td>
+            <td th:text="${#numbers.formatDecimal(row.amount, 1, 2)} + ' ₽'"></td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

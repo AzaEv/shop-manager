@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap narrow">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1>Оформление заказа</h1>
+    <p th:if="${#lists.isEmpty(cart.items)}">Корзина пуста. <a href="/">В каталог</a></p>
+    <form th:if="${!#lists.isEmpty(cart.items)}" th:action="@{/checkout}" method="post">
+        <p th:text="'К оплате: ' + ${#numbers.formatDecimal(total, 1, 2)} + ' ₽'"></p>
+        <label>Адрес доставки
+            <textarea name="address" required rows="3"></textarea>
+        </label>
+        <button type="submit">Подтвердить заказ</button>
+    </form>
+</main>
+</body>
+</html>

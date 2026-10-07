@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap narrow">
+    <h1>Вход</h1>
+    <p class="flash err" th:if="${param.error}">Неверный email или пароль</p>
+    <form th:action="@{/login}" method="post">
+        <label>Email
+            <input type="email" name="username" required>
+        </label>
+        <label>Пароль
+            <input type="password" name="password" required>
+        </label>
+        <button type="submit">Войти</button>
+    </form>
+    <p>Нет аккаунта? <a href="/register">Регистрация</a></p>
+    <p class="muted">Демо: customer@shop.local / customer123 · admin@shop.local / admin123</p>
+</main>
+</body>
+</html>
