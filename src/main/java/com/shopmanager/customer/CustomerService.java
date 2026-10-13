@@ -35,6 +35,10 @@ public class CustomerService {
                 .orElseThrow(() -> new NotFoundException("Клиент не найден: " + email));
     }
 
+    public boolean exists(String email) {
+        return customerRepository.existsByEmail(email.toLowerCase().trim());
+    }
+
     public List<Customer> findAll() {
         return customerRepository.findAllByOrderByCreatedAtDesc();
     }
@@ -64,5 +68,21 @@ public class CustomerService {
         cart.setCustomer(customer);
         cartRepository.save(cart);
         return customer;
+    }
+
+    @Transactional
+    public void changeRole(Customer actor, Long customerId, Role role) {
+        if (actor.getRole() != Role.ADMIN) {
+            throw new BusinessException("Менять роли может только администратор");
+        }
+        Customer customer = get(customerId);
+        if (actor.getId().equals(customer.getId())) {
+            throw new BusinessException("Нельзя изменить собственную роль");
+        }
+        if (customer.getRole() == Role.ADMIN && role != Role.ADMIN
+                && customerRepository.countByRole(Role.ADMIN) <= 1) {
+            throw new BusinessException("Нельзя снять роль с последнего администратора");
+        }
+        customer.setRole(role);
     }
 }

@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -217,5 +218,21 @@ class ShopScenarioTest {
                         {"categoryId":1,"name":"Bad","sku":"","price":10,"stock":1,"active":true}
                         """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void t13StaffCannotUseCart() throws Exception {
+        mockMvc.perform(get("/api/cart").with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void t14OnlyAdminDownloadsReport() throws Exception {
+        mockMvc.perform(get("/admin/report.csv").with(httpBasic("customer@shop.local", "customer123")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/admin/report.csv").with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/csv"))
+                .andExpect(content().string(containsString("summary,revenue")));
     }
 }

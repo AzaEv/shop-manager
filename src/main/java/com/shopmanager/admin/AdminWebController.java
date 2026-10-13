@@ -2,6 +2,11 @@ package com.shopmanager.admin;
 
 import java.math.BigDecimal;
 
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +19,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.shopmanager.catalog.CategoryService;
 import com.shopmanager.catalog.ProductService;
 import com.shopmanager.catalog.ProductSort;
+import com.shopmanager.config.CurrentUser;
+import com.shopmanager.customer.Customer;
 import com.shopmanager.customer.CustomerService;
+import com.shopmanager.customer.Role;
 import com.shopmanager.order.OrderService;
 import com.shopmanager.order.OrderStatus;
 import com.shopmanager.report.ReportService;
@@ -28,19 +36,25 @@ public class AdminWebController {
     private final CustomerService customerService;
     private final OrderService orderService;
     private final ReportService reportService;
+    private final CurrentUser currentUser;
 
     public AdminWebController(ProductService productService, CategoryService categoryService,
-            CustomerService customerService, OrderService orderService, ReportService reportService) {
+            CustomerService customerService, OrderService orderService, ReportService reportService,
+            CurrentUser currentUser) {
         this.productService = productService;
         this.categoryService = categoryService;
         this.customerService = customerService;
         this.orderService = orderService;
         this.reportService = reportService;
+        this.currentUser = currentUser;
     }
 
     @GetMapping
-    public String home() {
-        return "redirect:/admin/report";
+    public String home(Authentication authentication) {
+        if (has(authentication, "ROLE_ADMIN") || has(authentication, "ROLE_MANAGER")) {
+            return has(authentication, "ROLE_ADMIN") ? "redirect:/admin/report" : "redirect:/admin/orders";
+        }
+        return "redirect:/admin/products";
     }
 
     @GetMapping("/report")
@@ -48,6 +62,18 @@ public class AdminWebController {
         model.addAttribute("report", reportService.build());
         model.addAttribute("pageTitle", "Аналитический отчёт");
         return "admin/report";
+    }
+
+    @GetMapping("/report.csv")
+    public ResponseEntity<byte[]> reportCsv() {
+        byte[] body = reportService.toCsv();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename("shop-report.csv")
+                        .build()
+                        .toString())
+                .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
+                .body(body);
     }
 
     @GetMapping("/products")
@@ -137,11 +163,22 @@ public class AdminWebController {
     }
 
     @GetMapping("/customers")
-    public String customers(@RequestParam(required = false) String q, Model model) {
+    public String customers(@RequestParam(required = false) String q, Authentication authentication, Model model) {
         model.addAttribute("customers", customerService.search(q));
         model.addAttribute("q", q);
+        model.addAttribute("roles", Role.values());
+        model.addAttribute("canEditRoles", has(authentication, "ROLE_ADMIN"));
         model.addAttribute("pageTitle", "Клиенты");
         return "admin/customers";
+    }
+
+    @PostMapping("/customers/{id}/role")
+    public String changeRole(@PathVariable Long id, @RequestParam Role role, Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+        Customer actor = currentUser.require(authentication);
+        customerService.changeRole(actor, id, role);
+        redirectAttributes.addFlashAttribute("message", "Роль обновлена");
+        return "redirect:/admin/customers";
     }
 
     @GetMapping("/orders")
@@ -167,5 +204,10 @@ public class AdminWebController {
         orderService.changeStatus(id, status);
         redirectAttributes.addFlashAttribute("message", "Статус обновлён");
         return "redirect:/admin/orders/" + id;
+    }
+
+    private static boolean has(Authentication authentication, String authority) {
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(granted -> granted.getAuthority().equals(authority));
     }
 }

@@ -103,6 +103,8 @@ input, select, textarea {
 .search-bar input, .search-bar select { width: auto; flex: 1; margin: 0; min-width: 140px; }
 .actions { display: flex; gap: 0.5rem; align-items: center; }
 .actions form { background: none; border: 0; padding: 0; }
+.role-form { display: flex; gap: 0.4rem; align-items: center; background: none; border: 0; padding: 0; }
+.role-form select { width: auto; margin: 0; min-width: 10rem; }
 .kpis {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));

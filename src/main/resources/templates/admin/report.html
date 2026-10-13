@@ -1,17 +1,13 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
 <main class="wrap">
     <div th:replace="~{fragments/layout :: flash}"></div>
-    <nav class="admin-nav">
-        <a class="active" href="/admin/report">Отчёт</a>
-        <a href="/admin/orders">Заказы</a>
-        <a href="/admin/products">Товары</a>
-        <a href="/admin/customers">Клиенты</a>
-    </nav>
+    <nav th:replace="~{fragments/layout :: adminNav('report')}"></nav>
     <h1>Аналитический отчёт по продажам</h1>
+    <p sec:authorize="hasRole('ADMIN')"><a class="button" href="/admin/report.csv">Скачать CSV</a></p>
     <p class="muted">Выручка считается по всем заказам, кроме отменённых. Средний чек — выручка, делённая на число неотменённых заказов.</p>
     <section class="kpis">
         <article class="kpi"><span>Клиенты</span><strong th:text="${report.customerCount}">0</strong></article>

@@ -13,6 +13,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     boolean existsByEmail(String email);
 
+    long countByRole(Role role);
+
     List<Customer> findAllByOrderByCreatedAtDesc();
 
     @Query("""

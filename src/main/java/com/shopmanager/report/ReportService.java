@@ -73,6 +73,45 @@ public class ReportService {
         return new ShopAnalytics(customers, products, orders, cancelled, revenue, average, statusRows, top);
     }
 
+    public byte[] toCsv() {
+        ShopAnalytics report = build();
+        StringBuilder csv = new StringBuilder();
+        csv.append('\uFEFF');
+        csv.append("section,name,count,amount,percent\n");
+        row(csv, "summary", "customers", report.customerCount(), null, null);
+        row(csv, "summary", "products", report.productCount(), null, null);
+        row(csv, "summary", "orders", report.orderCount(), null, null);
+        row(csv, "summary", "cancelled", report.cancelledCount(), null, null);
+        row(csv, "summary", "revenue", null, report.revenue(), null);
+        row(csv, "summary", "average_check", null, report.averageCheck(), null);
+        for (StatusRow status : report.byStatus()) {
+            row(csv, "status", status.status().name(), status.orderCount(), status.amount(),
+                    status.percentOfRevenue());
+        }
+        for (ProductRow product : report.topProducts()) {
+            row(csv, "product", product.productName(), product.quantity(), product.amount(), null);
+        }
+        return csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private static void row(StringBuilder csv, String section, String name, Long count, BigDecimal amount,
+            Integer percent) {
+        csv.append(section).append(',')
+                .append(escape(name)).append(',')
+                .append(count == null ? "" : count).append(',')
+                .append(amount == null ? "" : amount.toPlainString()).append(',')
+                .append(percent == null ? "" : percent)
+                .append('\n');
+    }
+
+    private static String escape(String value) {
+        String safe = value == null ? "" : value;
+        if (safe.contains(",") || safe.contains("\"") || safe.contains("\n")) {
+            return "\"" + safe.replace("\"", "\"\"") + "\"";
+        }
+        return safe;
+    }
+
     private static BigDecimal nvl(BigDecimal value) {
         return value == null ? BigDecimal.ZERO.setScale(2) : value.setScale(2, RoundingMode.HALF_UP);
     }

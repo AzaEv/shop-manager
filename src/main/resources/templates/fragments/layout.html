@@ -11,10 +11,10 @@
     <a class="brand" href="/">Shop Manager</a>
     <nav>
         <a href="/">Каталог</a>
-        <a href="/cart" sec:authorize="isAuthenticated()">Корзина</a>
-        <a href="/orders" sec:authorize="isAuthenticated()">Заказы</a>
-        <a href="/admin" sec:authorize="hasRole('ADMIN')">Админка</a>
-        <a href="/admin/report" sec:authorize="hasRole('ADMIN')">Отчёт</a>
+        <a href="/cart" sec:authorize="hasRole('CUSTOMER')">Корзина</a>
+        <a href="/orders" sec:authorize="hasRole('CUSTOMER')">Заказы</a>
+        <a href="/admin" sec:authorize="hasAnyRole('ADMIN','MANAGER','WAREHOUSE')">Админка</a>
+        <a href="/admin/report" sec:authorize="hasAnyRole('ADMIN','MANAGER')">Отчёт</a>
     </nav>
     <div class="account">
         <span sec:authorize="isAuthenticated()" sec:authentication="name"></span>
@@ -29,5 +29,15 @@
     <p class="flash ok" th:if="${message}" th:text="${message}"></p>
     <p class="flash err" th:if="${error}" th:text="${error}"></p>
 </div>
+<nav th:fragment="adminNav(active)" class="admin-nav">
+    <a href="/admin/report" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+       th:classappend="${active == 'report'} ? 'active'">Отчёт</a>
+    <a href="/admin/orders" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+       th:classappend="${active == 'orders'} ? 'active'">Заказы</a>
+    <a href="/admin/products" sec:authorize="hasAnyRole('ADMIN','WAREHOUSE')"
+       th:classappend="${active == 'products'} ? 'active'">Товары</a>
+    <a href="/admin/customers" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+       th:classappend="${active == 'customers'} ? 'active'">Клиенты</a>
+</nav>
 </body>
 </html>

@@ -5,12 +5,7 @@
 <header th:replace="~{fragments/layout :: header}"></header>
 <main class="wrap">
     <div th:replace="~{fragments/layout :: flash}"></div>
-    <nav class="admin-nav">
-        <a href="/admin/report">Отчёт</a>
-        <a class="active" href="/admin/orders">Заказы</a>
-        <a href="/admin/products">Товары</a>
-        <a href="/admin/customers">Клиенты</a>
-    </nav>
+    <nav th:replace="~{fragments/layout :: adminNav('orders')}"></nav>
     <h1>Заказы</h1>
     <div class="filters">
         <a th:classappend="${selectedStatus == null} ? ' active'" href="/admin/orders">Все</a>

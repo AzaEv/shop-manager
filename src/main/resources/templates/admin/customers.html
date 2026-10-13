@@ -1,16 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
 <main class="wrap">
     <div th:replace="~{fragments/layout :: flash}"></div>
-    <nav class="admin-nav">
-        <a href="/admin/report">Отчёт</a>
-        <a href="/admin/orders">Заказы</a>
-        <a href="/admin/products">Товары</a>
-        <a class="active" href="/admin/customers">Клиенты</a>
-    </nav>
+    <nav th:replace="~{fragments/layout :: adminNav('customers')}"></nav>
     <h1>Клиенты</h1>
     <form class="search-bar" method="get" th:action="@{/admin/customers}">
         <input type="search" name="q" placeholder="Поиск по имени или email" th:value="${q}">
@@ -25,7 +20,17 @@
             <td th:text="${customer.name}"></td>
             <td th:text="${customer.email}"></td>
             <td th:text="${customer.phone}"></td>
-            <td th:text="${customer.role}"></td>
+            <td>
+                <form th:if="${canEditRoles}" class="role-form" method="post"
+                      th:action="@{/admin/customers/{id}/role(id=${customer.id})}">
+                    <select name="role">
+                        <option th:each="role : ${roles}" th:value="${role}" th:text="${role.title}"
+                                th:selected="${role == customer.role}"></option>
+                    </select>
+                    <button type="submit">Сохранить</button>
+                </form>
+                <span th:unless="${canEditRoles}" th:text="${customer.role.title}"></span>
+            </td>
         </tr>
         </tbody>
     </table>

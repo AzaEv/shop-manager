@@ -58,7 +58,7 @@ public class OrderWebController {
     public String order(@PathVariable Long id, Authentication authentication, Model model) {
         Customer customer = currentUser.require(authentication);
         ShopOrder order = orderService.get(id);
-        if (customer.getRole() != Role.ADMIN && !order.getCustomer().getId().equals(customer.getId())) {
+        if (!customer.getRole().managesOrders() && !order.getCustomer().getId().equals(customer.getId())) {
             throw new NotFoundException("Заказ не найден: " + id);
         }
         model.addAttribute("order", order);

@@ -105,7 +105,7 @@ public class ShopApiController {
     public List<OrderResponse> orders(Authentication authentication,
             @RequestParam(required = false) OrderStatus status) {
         Customer customer = currentUser.require(authentication);
-        List<ShopOrder> orders = customer.getRole() == Role.ADMIN
+        List<ShopOrder> orders = customer.getRole().managesOrders()
                 ? orderService.listAll(status)
                 : orderService.listForCustomer(customer);
         return orders.stream().map(this::toOrder).toList();
@@ -124,7 +124,7 @@ public class ShopApiController {
     }
 
     private void ensureCanView(Customer customer, ShopOrder order) {
-        if (customer.getRole() != Role.ADMIN && !order.getCustomer().getId().equals(customer.getId())) {
+        if (!customer.getRole().managesOrders() && !order.getCustomer().getId().equals(customer.getId())) {
             throw new com.shopmanager.common.NotFoundException("Заказ не найден: " + order.getId());
         }
     }

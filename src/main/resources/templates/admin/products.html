@@ -5,12 +5,7 @@
 <header th:replace="~{fragments/layout :: header}"></header>
 <main class="wrap">
     <div th:replace="~{fragments/layout :: flash}"></div>
-    <nav class="admin-nav">
-        <a href="/admin/report">Отчёт</a>
-        <a href="/admin/orders">Заказы</a>
-        <a class="active" href="/admin/products">Товары</a>
-        <a href="/admin/customers">Клиенты</a>
-    </nav>
+    <nav th:replace="~{fragments/layout :: adminNav('products')}"></nav>
     <h1>Товары</h1>
     <p><a class="button" href="/admin/products/new">Новый товар</a></p>
     <form class="search-bar" method="get" th:action="@{/admin/products}">
