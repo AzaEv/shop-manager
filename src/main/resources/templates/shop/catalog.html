@@ -17,7 +17,9 @@
                         <p th:text="${slide.text}">Описание</p>
                         <a class="btn" th:href="${@ui.categoryHref(categories, slide.slug)}">Смотреть</a>
                     </div>
-                    <div class="hero-art" th:text="${@ui.emoji(slide.slug)}">🛍️</div>
+                    <div class="hero-art">
+                        <img th:src="@{${@ui.heroPhoto(slide.slug)}}" alt="">
+                    </div>
                 </article>
             </div>
             <button type="button" class="hero-nav prev" data-hero-prev aria-label="Предыдущий слайд">‹</button>

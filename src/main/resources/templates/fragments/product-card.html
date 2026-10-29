@@ -4,7 +4,8 @@
 <article th:fragment="card(product, index)" class="pcard" th:style="'--i:' + ${index}">
     <a class="art" th:classappend="${'tone-' + @ui.tone(product.category.slug)}"
        th:href="@{/products/{id}(id=${product.id})}" th:aria-label="${product.name}">
-        <span th:text="${@ui.emoji(product.category.slug)}">🛍️</span>
+        <img th:if="${@ui.photo(product.sku) != null}" th:src="@{${@ui.photo(product.sku)}}" th:alt="${product.name}">
+        <span th:if="${@ui.photo(product.sku) == null}" th:text="${@ui.emoji(product.category.slug)}">🛍️</span>
     </a>
     <a class="name" th:href="@{/products/{id}(id=${product.id})}" th:text="${product.name}">Товар</a>
     <div class="price-row" th:text="${@ui.rub(product.price)}">0 ₽</div>

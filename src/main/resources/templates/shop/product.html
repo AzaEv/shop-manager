@@ -15,7 +15,8 @@
         </p>
         <section class="product">
             <div class="art lg" th:classappend="${'tone-' + @ui.tone(product.category.slug)}">
-                <span th:text="${@ui.emoji(product.category.slug)}">🛍️</span>
+                <img th:if="${@ui.photo(product.sku) != null}" th:src="@{${@ui.photo(product.sku)}}" th:alt="${product.name}">
+                <span th:if="${@ui.photo(product.sku) == null}" th:text="${@ui.emoji(product.category.slug)}">🛍️</span>
             </div>
             <div class="buybox">
                 <p class="sku" th:text="${product.category.name} + ' · ' + ${product.sku}"></p>

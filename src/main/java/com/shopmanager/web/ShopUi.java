@@ -8,6 +8,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,12 @@ public class ShopUi {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Tashkent");
     private static final DateTimeFormatter WHEN = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").withZone(ZONE);
+    private static final Set<String> PHOTO_SKUS = Set.of(
+            "PHN-X15", "PHN-X15P", "PHN-AIR", "PHN-MINI",
+            "AUD-WB1", "AUD-WS1", "AUD-WH1", "AUD-MIC",
+            "OFF-DL2", "OFF-NB5", "OFF-PEN", "OFF-MP1", "OFF-CH1",
+            "ACC-USBC", "ACC-PB1", "ACC-CS1",
+            "HOM-MUG", "HOM-PLT");
 
     public record Slide(String kicker, String title, String text, String slug, String tone) {
     }
@@ -67,6 +74,28 @@ public class ShopUi {
             return "";
         }
         return WHEN.format(instant);
+    }
+
+    public String photo(String sku) {
+        if (sku == null || sku.isBlank()) {
+            return null;
+        }
+        String key = sku.trim().toUpperCase(Locale.ROOT);
+        if (!PHOTO_SKUS.contains(key)) {
+            return null;
+        }
+        return "/img/products/" + key + ".jpg";
+    }
+
+    public String heroPhoto(String slug) {
+        if (slug == null) {
+            return "/img/hero/phones.jpg";
+        }
+        return switch (slug) {
+            case "audio" -> "/img/hero/audio.jpg";
+            case "home" -> "/img/hero/home.jpg";
+            default -> "/img/hero/phones.jpg";
+        };
     }
 
     public String emoji(String slug) {

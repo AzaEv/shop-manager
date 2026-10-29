@@ -1,0 +1,7 @@
+Фотографии каталога скачаны как свободные стоковые снимки и лежат в репозитории, чтобы витрина открывалась без интернета.
+
+Unsplash License (https://unsplash.com/license):
+PHN-X15, PHN-X15P, PHN-AIR, PHN-MINI, AUD-WB1, AUD-WH1, AUD-MIC, OFF-NB5, OFF-PEN, OFF-MP1, ACC-PB1, HOM-MUG, HOM-PLT, hero/phones.jpg, hero/audio.jpg
+
+Pexels License (https://www.pexels.com/license/):
+AUD-WS1, OFF-DL2, OFF-CH1, ACC-USBC, ACC-CS1, hero/home.jpg

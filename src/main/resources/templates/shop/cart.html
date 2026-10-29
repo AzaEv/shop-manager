@@ -12,7 +12,8 @@
                 <article class="cart-row" th:each="item : ${cart.items}">
                     <a class="art sm" th:classappend="${'tone-' + @ui.tone(item.product.category.slug)}"
                        th:href="@{/products/{id}(id=${item.product.id})}">
-                        <span th:text="${@ui.emoji(item.product.category.slug)}">🛍️</span>
+                        <img th:if="${@ui.photo(item.product.sku) != null}" th:src="@{${@ui.photo(item.product.sku)}}" th:alt="${item.product.name}">
+                        <span th:if="${@ui.photo(item.product.sku) == null}" th:text="${@ui.emoji(item.product.category.slug)}">🛍️</span>
                     </a>
                     <div>
                         <h2><a th:href="@{/products/{id}(id=${item.product.id})}" th:text="${item.product.name}">Товар</a></h2>
