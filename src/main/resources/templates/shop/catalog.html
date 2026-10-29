@@ -4,9 +4,6 @@
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
 <main class="page">
-    <div class="container">
-        <div th:replace="~{fragments/layout :: flash}"></div>
-
         <section class="hero" data-hero th:if="${#strings.isEmpty(q) and selectedCategoryId == null}">
             <div class="hero-viewport">
                 <article class="hero-slide" th:each="slide, stat : ${@ui.slides()}"
@@ -15,7 +12,7 @@
                         <p class="kicker" th:text="${slide.kicker}">Раздел</p>
                         <h2 th:text="${slide.title}">Заголовок</h2>
                         <p th:text="${slide.text}">Описание</p>
-                        <a class="btn" th:href="${@ui.categoryHref(categories, slide.slug)}">Смотреть</a>
+                        <a class="btn" th:href="${@ui.categoryHref(categories, slide.slug)}">Подробнее</a>
                     </div>
                     <div class="hero-art">
                         <img th:src="@{${@ui.heroPhoto(slide.slug)}}" alt="">
@@ -32,6 +29,8 @@
             </div>
         </section>
 
+    <div class="container">
+        <div th:replace="~{fragments/layout :: flash}"></div>
         <nav class="rail" aria-label="Категории">
             <a th:href="@{/(q=${q}, sort=${sort}, dir=${dir})}" th:classappend="${selectedCategoryId == null} ? 'is-active'">
                 <span class="bubble tone-default">✨</span>
