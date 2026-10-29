@@ -1,33 +1,43 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="wrap">
-    <div th:replace="~{fragments/layout :: flash}"></div>
-    <nav th:replace="~{fragments/layout :: adminNav('orders')}"></nav>
-    <h1>Заказы</h1>
-    <div class="filters">
-        <a th:classappend="${selectedStatus == null} ? ' active'" href="/admin/orders">Все</a>
-        <a th:each="st : ${statuses}"
-           th:href="@{/admin/orders(status=${st})}"
-           th:text="${st}"
-           th:classappend="${selectedStatus == st} ? ' active'"></a>
+<main class="page">
+    <div class="container">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <nav th:replace="~{fragments/layout :: adminNav('orders')}"></nav>
+        <h1>Заказы</h1>
+        <div class="filters">
+            <a th:classappend="${selectedStatus == null} ? ' is-active'" href="/admin/orders">Все</a>
+            <a th:each="st : ${statuses}"
+               th:href="@{/admin/orders(status=${st})}"
+               th:text="${st.title}"
+               th:classappend="${selectedStatus == st} ? ' is-active'"></a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr><th>№</th><th>Клиент</th><th>Статус</th><th>Сумма</th><th>Дата</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="order : ${orders}">
+                    <td><a th:href="@{/admin/orders/{id}(id=${order.id})}" th:text="${order.id}"></a></td>
+                    <td>
+                        <div th:text="${order.customer.name}"></div>
+                        <div class="muted" th:text="${order.customer.email}"></div>
+                    </td>
+                    <td><span class="status" th:classappend="${'status-' + order.status}" th:text="${order.status.title}"></span></td>
+                    <td th:text="${@ui.rub(order.total)}"></td>
+                    <td th:text="${@ui.when(order.createdAt)}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="muted" th:if="${#lists.isEmpty(orders)}">Заказов с таким статусом нет.</p>
     </div>
-    <table>
-        <thead>
-        <tr><th>№</th><th>Клиент</th><th>Статус</th><th>Сумма</th><th>Дата</th></tr>
-        </thead>
-        <tbody>
-        <tr th:each="order : ${orders}">
-            <td><a th:href="@{/admin/orders/{id}(id=${order.id})}" th:text="${order.id}"></a></td>
-            <td th:text="${order.customer.email}"></td>
-            <td><span class="status" th:text="${order.status}"></span></td>
-            <td th:text="${#numbers.formatDecimal(order.total, 1, 2)}"></td>
-            <td th:text="${#temporals.format(order.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
-        </tr>
-        </tbody>
-    </table>
 </main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<nav th:replace="~{fragments/layout :: tabbar}"></nav>
 </body>
 </html>

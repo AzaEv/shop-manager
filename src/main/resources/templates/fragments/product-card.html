@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<article th:fragment="card(product, index)" class="pcard" th:style="'--i:' + ${index}">
+    <a class="art" th:classappend="${'tone-' + @ui.tone(product.category.slug)}"
+       th:href="@{/products/{id}(id=${product.id})}" th:aria-label="${product.name}">
+        <span th:text="${@ui.emoji(product.category.slug)}">🛍️</span>
+    </a>
+    <a class="name" th:href="@{/products/{id}(id=${product.id})}" th:text="${product.name}">Товар</a>
+    <div class="price-row" th:text="${@ui.rub(product.price)}">0 ₽</div>
+    <p class="month" th:text="'от ' + ${@ui.monthly(product.price)} + ' / мес'">от 0 ₽ / мес</p>
+    <p class="low" th:if="${product.stock > 0 and product.stock < 5}" th:text="'Осталось ' + ${product.stock} + ' шт.'"></p>
+    <div class="card-actions">
+        <form class="buy" th:if="${product.active and product.stock > 0}" sec:authorize="hasRole('CUSTOMER')"
+              th:action="@{/cart/items}" method="post">
+            <input type="hidden" name="productId" th:value="${product.id}">
+            <input type="hidden" name="quantity" value="1">
+            <button class="btn sm full" type="submit">В корзину</button>
+        </form>
+        <p class="muted tiny" th:if="${!product.active or product.stock < 1}">Нет в наличии</p>
+        <a class="btn ghost sm full" href="/login" sec:authorize="!isAuthenticated()"
+           th:if="${product.active and product.stock > 0}">Войти, чтобы купить</a>
+        <p class="muted tiny" sec:authorize="isAuthenticated() and !hasRole('CUSTOMER')">Только для покупателей</p>
+    </div>
+</article>
+</body>
+</html>

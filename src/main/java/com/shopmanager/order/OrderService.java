@@ -110,7 +110,7 @@ public class OrderService {
         ShopOrder order = get(orderId);
         OrderStatus current = order.getStatus();
         if (!current.canTransitionTo(next)) {
-            throw new BusinessException("Нельзя сменить статус " + current + " → " + next);
+            throw new BusinessException("Нельзя сменить статус " + current.getTitle() + " → " + next.getTitle());
         }
         if (next == OrderStatus.CANCELLED) {
             for (OrderItem item : order.getItems()) {

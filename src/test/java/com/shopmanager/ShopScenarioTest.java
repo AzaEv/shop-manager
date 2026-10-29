@@ -4,15 +4,23 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import java.util.UUID;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +37,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shopmanager.catalog.Category;
 import com.shopmanager.catalog.CategoryRepository;
 import com.shopmanager.catalog.ProductService;
+import com.shopmanager.common.BusinessException;
+import com.shopmanager.customer.Customer;
 import com.shopmanager.customer.CustomerService;
 import com.shopmanager.customer.Role;
 
@@ -51,6 +61,9 @@ class ShopScenarioTest {
 
     @Autowired
     CustomerService customerService;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void seed() {
@@ -234,5 +247,55 @@ class ShopScenarioTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("text/csv"))
                 .andExpect(content().string(containsString("summary,revenue")));
+    }
+
+    @Test
+    void t15StorefrontRenders() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("nova")))
+                .andExpect(content().string(containsString("Nova для каждого дня")))
+                .andExpect(content().string(containsString("Nova X15")));
+        mockMvc.perform(get("/").param("q", "Wave"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Wave Buds")));
+        mockMvc.perform(get("/products/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Войти, чтобы купить")));
+        mockMvc.perform(get("/products/1").with(httpBasic("customer@shop.local", "customer123")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("В корзину")));
+    }
+
+    @Test
+    void t16CustomerEditsProfile() throws Exception {
+        String email = "profile-" + UUID.randomUUID() + "@shop.local";
+        Customer created = customerService.register(email, "Старое имя", "+7002", "secret12", Role.CUSTOMER);
+
+        mockMvc.perform(post("/profile")
+                        .with(httpBasic(email, "secret12"))
+                        .with(csrf())
+                        .param("name", "Новое имя")
+                        .param("email", email)
+                        .param("phone", "+79990001122")
+                        .param("address", "Душанбе, пр. Рудаки 1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profile"));
+
+        mockMvc.perform(get("/profile").with(httpBasic(email, "secret12")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Новое имя")))
+                .andExpect(content().string(containsString("Душанбе, пр. Рудаки 1")));
+
+        assertThrows(BusinessException.class, () -> customerService.updateProfile(
+                created.getId(), "Новое имя", email, "+79990001122", "Душанбе", "wrong-pass", "newpass1"));
+
+        Customer renamed = customerService.updateProfile(
+                created.getId(), "Новое имя", "moved-" + email, "+79990001122", "Душанбе", "secret12", "newpass1");
+        assertEquals("moved-" + email, renamed.getEmail());
+        assertTrue(passwordEncoder.matches("newpass1", renamed.getPasswordHash()));
+
+        mockMvc.perform(get("/profile").accept(MediaType.TEXT_HTML))
+                .andExpect(status().is3xxRedirection());
     }
 }

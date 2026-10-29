@@ -1,33 +1,53 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="wrap narrow">
-    <div th:replace="~{fragments/layout :: flash}"></div>
-    <p><a href="/orders">← К заказам</a></p>
-    <h1 th:text="'Заказ №' + ${order.id}"></h1>
-    <p>Статус: <span class="status" th:text="${order.status}"></span></p>
-    <p th:text="'Адрес: ' + ${order.address}"></p>
-    <table>
-        <thead>
-        <tr><th>Товар</th><th>SKU</th><th>Цена</th><th>Кол-во</th></tr>
-        </thead>
-        <tbody>
-        <tr th:each="item : ${order.items}">
-            <td th:text="${item.productName}"></td>
-            <td th:text="${item.sku}"></td>
-            <td th:text="${#numbers.formatDecimal(item.unitPrice, 1, 2)}"></td>
-            <td th:text="${item.quantity}"></td>
-        </tr>
-        </tbody>
-    </table>
-    <p class="price" th:text="'Итого: ' + ${#numbers.formatDecimal(order.total, 1, 2)} + ' ₽'"></p>
-    <h2>История статусов</h2>
-    <ul>
-        <li th:each="h : ${order.history}"
-            th:text="${(h.fromStatus != null ? h.fromStatus : '—')} + ' → ' + ${h.toStatus} + ' · ' + ${#temporals.format(h.changedAt, 'dd.MM.yyyy HH:mm')}"></li>
-    </ul>
+<main class="page">
+    <div class="container narrow">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <p><a class="back" href="/orders">← К заказам</a></p>
+        <div class="section-head">
+            <h1 th:text="'Заказ № ' + ${order.id}"></h1>
+            <span class="status" th:classappend="${'status-' + order.status}" th:text="${order.status.title}"></span>
+        </div>
+        <div class="steps" th:if="${order.status.name() != 'CANCELLED'}">
+            <div th:each="label, stat : ${ {'Новый','Оплачен','Собирается','В пути','Доставлен'} }"
+                 th:classappend="${stat.count <= order.status.step} ? 'done'">
+                <span th:text="${label}"></span>
+            </div>
+        </div>
+        <div class="panel">
+            <p th:text="'Адрес: ' + ${order.address}"></p>
+            <p class="muted" th:text="${@ui.when(order.createdAt)}"></p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr><th>Товар</th><th>SKU</th><th>Цена</th><th>Кол-во</th><th>Сумма</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="item : ${order.items}">
+                        <td th:text="${item.productName}"></td>
+                        <td th:text="${item.sku}"></td>
+                        <td th:text="${@ui.rub(item.unitPrice)}"></td>
+                        <td th:text="${item.quantity}"></td>
+                        <td th:text="${@ui.rub(@ui.line(item.unitPrice, item.quantity))}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="price-xl" th:text="${@ui.rub(order.total)}"></p>
+            <h2>История</h2>
+            <ol class="timeline">
+                <li th:each="entry : ${order.history}">
+                    <strong th:text="${entry.toStatus.title}"></strong>
+                    <p class="muted" th:text="${(entry.fromStatus != null ? entry.fromStatus.title + ' → ' : '') + @ui.when(entry.changedAt)}"></p>
+                </li>
+            </ol>
+        </div>
+    </div>
 </main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<nav th:replace="~{fragments/layout :: tabbar}"></nav>
 </body>
 </html>

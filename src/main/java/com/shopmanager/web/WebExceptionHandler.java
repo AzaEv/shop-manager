@@ -16,7 +16,8 @@ import jakarta.servlet.http.HttpServletRequest;
         AuthWebController.class,
         CartWebController.class,
         OrderWebController.class,
-        AdminWebController.class
+        AdminWebController.class,
+        ProfileWebController.class
 })
 public class WebExceptionHandler {
 

@@ -1,5 +1,7 @@
 package com.shopmanager.web;
 
+import java.net.URI;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,6 +15,8 @@ import com.shopmanager.cart.Cart;
 import com.shopmanager.cart.CartService;
 import com.shopmanager.config.CurrentUser;
 import com.shopmanager.customer.Customer;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 public class CartWebController {
@@ -37,10 +41,11 @@ public class CartWebController {
 
     @PostMapping("/cart/items")
     public String add(Authentication authentication, @RequestParam Long productId,
-            @RequestParam(defaultValue = "1") int quantity, RedirectAttributes redirectAttributes) {
+            @RequestParam(defaultValue = "1") int quantity, RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
         cartService.addItem(currentUser.require(authentication), productId, quantity);
         redirectAttributes.addFlashAttribute("message", "Товар добавлен в корзину");
-        return "redirect:/cart";
+        return redirectBack(request);
     }
 
     @PostMapping("/cart/items/{productId}")
@@ -50,8 +55,31 @@ public class CartWebController {
     }
 
     @PostMapping("/cart/items/{productId}/delete")
-    public String remove(Authentication authentication, @PathVariable Long productId) {
+    public String remove(Authentication authentication, @PathVariable Long productId,
+            RedirectAttributes redirectAttributes) {
         cartService.removeItem(currentUser.require(authentication), productId);
+        redirectAttributes.addFlashAttribute("message", "Товар убран из корзины");
         return "redirect:/cart";
+    }
+
+    private String redirectBack(HttpServletRequest request) {
+        String referer = request.getHeader("Referer");
+        if (referer == null || referer.isBlank()) {
+            return "redirect:/cart";
+        }
+        try {
+            URI uri = URI.create(referer);
+            if (uri.getHost() != null && !uri.getHost().equalsIgnoreCase(request.getServerName())) {
+                return "redirect:/cart";
+            }
+            String path = uri.getPath();
+            if (path == null || !path.startsWith("/") || path.startsWith("//")) {
+                return "redirect:/cart";
+            }
+            String query = uri.getRawQuery();
+            return "redirect:" + path + (query == null || query.isBlank() ? "" : "?" + query);
+        } catch (IllegalArgumentException ex) {
+            return "redirect:/cart";
+        }
     }
 }

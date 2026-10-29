@@ -1,39 +1,46 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="wrap">
-    <div th:replace="~{fragments/layout :: flash}"></div>
-    <nav th:replace="~{fragments/layout :: adminNav('customers')}"></nav>
-    <h1>Клиенты</h1>
-    <form class="search-bar" method="get" th:action="@{/admin/customers}">
-        <input type="search" name="q" placeholder="Поиск по имени или email" th:value="${q}">
-        <button type="submit">Найти</button>
-    </form>
-    <table>
-        <thead>
-        <tr><th>Имя</th><th>Email</th><th>Телефон</th><th>Роль</th></tr>
-        </thead>
-        <tbody>
-        <tr th:each="customer : ${customers}">
-            <td th:text="${customer.name}"></td>
-            <td th:text="${customer.email}"></td>
-            <td th:text="${customer.phone}"></td>
-            <td>
-                <form th:if="${canEditRoles}" class="role-form" method="post"
-                      th:action="@{/admin/customers/{id}/role(id=${customer.id})}">
-                    <select name="role">
-                        <option th:each="role : ${roles}" th:value="${role}" th:text="${role.title}"
-                                th:selected="${role == customer.role}"></option>
-                    </select>
-                    <button type="submit">Сохранить</button>
-                </form>
-                <span th:unless="${canEditRoles}" th:text="${customer.role.title}"></span>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+<main class="page">
+    <div class="container">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <nav th:replace="~{fragments/layout :: adminNav('customers')}"></nav>
+        <h1>Клиенты</h1>
+        <form class="toolbar" method="get" th:action="@{/admin/customers}">
+            <input type="search" name="q" placeholder="Поиск по имени или email" th:value="${q}">
+            <button class="btn" type="submit">Найти</button>
+        </form>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr><th>Имя</th><th>Email</th><th>Телефон</th><th>Адрес</th><th>Роль</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="customer : ${customers}">
+                    <td th:text="${customer.name}"></td>
+                    <td th:text="${customer.email}"></td>
+                    <td th:text="${customer.phone}"></td>
+                    <td th:text="${customer.address}"></td>
+                    <td>
+                        <form th:if="${canEditRoles}" class="role-form" method="post"
+                              th:action="@{/admin/customers/{id}/role(id=${customer.id})}">
+                            <select name="role">
+                                <option th:each="role : ${roles}" th:value="${role}" th:text="${role.title}"
+                                        th:selected="${role == customer.role}"></option>
+                            </select>
+                            <button class="btn sm" type="submit">Сохранить</button>
+                        </form>
+                        <span th:unless="${canEditRoles}" th:text="${customer.role.title}"></span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<nav th:replace="~{fragments/layout :: tabbar}"></nav>
 </body>
 </html>

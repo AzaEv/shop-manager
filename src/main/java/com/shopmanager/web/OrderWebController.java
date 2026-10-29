@@ -13,7 +13,7 @@ import com.shopmanager.cart.CartService;
 import com.shopmanager.common.NotFoundException;
 import com.shopmanager.config.CurrentUser;
 import com.shopmanager.customer.Customer;
-import com.shopmanager.customer.Role;
+import com.shopmanager.customer.CustomerService;
 import com.shopmanager.order.OrderService;
 import com.shopmanager.order.ShopOrder;
 
@@ -22,11 +22,14 @@ public class OrderWebController {
 
     private final OrderService orderService;
     private final CartService cartService;
+    private final CustomerService customerService;
     private final CurrentUser currentUser;
 
-    public OrderWebController(OrderService orderService, CartService cartService, CurrentUser currentUser) {
+    public OrderWebController(OrderService orderService, CartService cartService, CustomerService customerService,
+            CurrentUser currentUser) {
         this.orderService = orderService;
         this.cartService = cartService;
+        this.customerService = customerService;
         this.currentUser = currentUser;
     }
 
@@ -41,8 +44,19 @@ public class OrderWebController {
     }
 
     @PostMapping("/checkout")
-    public String checkout(Authentication authentication, @RequestParam String address) {
-        ShopOrder order = orderService.checkout(currentUser.require(authentication), address);
+    public String checkout(Authentication authentication, @RequestParam String address,
+            @RequestParam(required = false) String saveAddress,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        Customer customer = currentUser.require(authentication);
+        String trimmed = address == null ? "" : address.trim();
+        if (trimmed.isBlank()) {
+            throw new com.shopmanager.common.BusinessException("Укажите адрес доставки");
+        }
+        ShopOrder order = orderService.checkout(customer, trimmed);
+        if (saveAddress != null) {
+            customerService.saveAddress(customer.getId(), trimmed);
+        }
+        redirectAttributes.addFlashAttribute("message", "Заказ оформлен");
         return "redirect:/orders/" + order.getId();
     }
 

@@ -1,49 +1,84 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="wrap">
-    <div th:replace="~{fragments/layout :: flash}"></div>
-    <h1>Каталог</h1>
-    <form class="search-bar" method="get" action="/">
-        <input type="hidden" name="categoryId" th:if="${selectedCategoryId != null}" th:value="${selectedCategoryId}">
-        <input type="search" name="q" placeholder="Поиск по названию, SKU, описанию" th:value="${q}">
-        <select name="sort">
-            <option value="NAME" th:selected="${sort == 'NAME'}">По названию</option>
-            <option value="PRICE" th:selected="${sort == 'PRICE'}">По цене</option>
-            <option value="STOCK" th:selected="${sort == 'STOCK'}">По остатку</option>
-        </select>
-        <select name="dir">
-            <option value="asc" th:selected="${dir == 'asc'}">Возрастание</option>
-            <option value="desc" th:selected="${dir == 'desc'}">Убывание</option>
-        </select>
-        <button type="submit">Найти</button>
-    </form>
-    <div class="filters">
-        <a th:classappend="${selectedCategoryId == null} ? ' active'"
-           th:href="@{/(q=${q}, sort=${sort}, dir=${dir})}">Все</a>
-        <a th:each="category : ${categories}"
-           th:href="@{/(categoryId=${category.id}, q=${q}, sort=${sort}, dir=${dir})}"
-           th:text="${category.name}"
-           th:classappend="${selectedCategoryId == category.id} ? ' active'"></a>
-    </div>
-    <section class="grid">
-        <article class="card" th:each="product : ${products}">
-            <h2><a th:href="@{/products/{id}(id=${product.id})}" th:text="${product.name}">Товар</a></h2>
-            <p class="muted" th:text="${product.category.name}">Категория</p>
-            <p class="price" th:text="${#numbers.formatDecimal(product.price, 1, 2)} + ' ₽'">0</p>
-            <p class="muted" th:text="'В наличии: ' + ${product.stock}"></p>
-            <form th:action="@{/cart/items}" method="post" sec:authorize="hasRole('CUSTOMER')">
-                <input type="hidden" name="productId" th:value="${product.id}">
-                <input type="hidden" name="quantity" value="1">
-                <button type="submit">В корзину</button>
+<main class="page">
+    <div class="container">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <section class="hero" data-hero th:if="${#strings.isEmpty(q) and selectedCategoryId == null}">
+            <div class="hero-viewport">
+                <article class="hero-slide" th:each="slide, stat : ${@ui.slides()}"
+                         th:classappend="${(stat.first ? 'is-active ' : '') + 'tone-' + slide.tone}">
+                    <div class="hero-copy">
+                        <p class="kicker" th:text="${slide.kicker}">Раздел</p>
+                        <h2 th:text="${slide.title}">Заголовок</h2>
+                        <p th:text="${slide.text}">Описание</p>
+                        <a class="btn" th:href="${@ui.categoryHref(categories, slide.slug)}">Смотреть</a>
+                    </div>
+                    <div class="hero-art" th:text="${@ui.emoji(slide.slug)}">🛍️</div>
+                </article>
+            </div>
+            <button type="button" class="hero-nav prev" data-hero-prev aria-label="Предыдущий слайд">‹</button>
+            <button type="button" class="hero-nav next" data-hero-next aria-label="Следующий слайд">›</button>
+            <div class="hero-dots">
+                <button type="button" th:each="slide, stat : ${@ui.slides()}"
+                        th:attr="data-hero-dot=${stat.index}"
+                        th:classappend="${stat.first} ? 'is-active'"
+                        th:aria-label="'Слайд ' + ${stat.count}"></button>
+            </div>
+        </section>
+
+        <nav class="rail" aria-label="Категории">
+            <a th:href="@{/(q=${q}, sort=${sort}, dir=${dir})}" th:classappend="${selectedCategoryId == null} ? 'is-active'">
+                <span class="bubble tone-default">✨</span>
+                <span>Все</span>
+            </a>
+            <a th:each="category : ${categories}"
+               th:href="@{/(categoryId=${category.id}, q=${q}, sort=${sort}, dir=${dir})}"
+               th:classappend="${selectedCategoryId == category.id} ? 'is-active'">
+                <span class="bubble" th:classappend="${'tone-' + @ui.tone(category.slug)}"
+                      th:text="${@ui.emoji(category.slug)}">🛍️</span>
+                <span th:text="${category.name}">Категория</span>
+            </a>
+        </nav>
+
+        <div class="section-head">
+            <div>
+                <h1 th:text="${selectedCategory != null ? selectedCategory.name : (#strings.isEmpty(q) ? 'Рекомендуем' : 'Поиск')}">Рекомендуем</h1>
+                <p class="muted" th:if="${!#strings.isEmpty(q)}" th:text="'Запрос: «' + ${q} + '»'"></p>
+                <p class="muted" th:text="${#lists.size(products)} + ' товаров'"></p>
+            </div>
+            <form class="sortbar" method="get" action="/">
+                <input type="hidden" name="q" th:value="${q}">
+                <input type="hidden" name="categoryId" th:if="${selectedCategoryId != null}" th:value="${selectedCategoryId}">
+                <select name="sort" aria-label="Сортировка" onchange="this.form.submit()">
+                    <option value="NAME" th:selected="${sort == 'NAME'}">По названию</option>
+                    <option value="PRICE" th:selected="${sort == 'PRICE'}">По цене</option>
+                    <option value="STOCK" th:selected="${sort == 'STOCK'}">По остатку</option>
+                </select>
+                <select name="dir" aria-label="Порядок" onchange="this.form.submit()">
+                    <option value="asc" th:selected="${dir == 'asc'}">Сначала меньшие</option>
+                    <option value="desc" th:selected="${dir == 'desc'}">Сначала большие</option>
+                </select>
             </form>
-            <a class="ghost" href="/login" sec:authorize="!isAuthenticated()">Войдите, чтобы купить</a>
-            <p class="muted" sec:authorize="isAuthenticated() and !hasRole('CUSTOMER')">Покупка доступна только покупателям</p>
-        </article>
-    </section>
-    <p th:if="${#lists.isEmpty(products)}" class="muted">Ничего не найдено. Измените запрос или фильтр.</p>
+        </div>
+
+        <section class="grid" th:if="${!#lists.isEmpty(products)}">
+            <th:block th:each="product, stat : ${products}">
+                <article th:replace="~{fragments/product-card :: card(product=${product}, index=${stat.index})}"></article>
+            </th:block>
+        </section>
+        <div class="empty" th:if="${#lists.isEmpty(products)}">
+            <div class="big">🔍</div>
+            <h2>Ничего не нашлось</h2>
+            <p class="muted">Смените запрос или откройте другую категорию.</p>
+            <a class="btn" href="/">Ко всему каталогу</a>
+        </div>
+    </div>
 </main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<nav th:replace="~{fragments/layout :: tabbar}"></nav>
 </body>
 </html>

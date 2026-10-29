@@ -12,6 +12,9 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
 
     Optional<Cart> findByCustomer(Customer customer);
 
+    @Query("select coalesce(sum(i.quantity), 0) from CartItem i where i.cart.customer.id = :customerId")
+    long sumQuantityByCustomerId(@Param("customerId") Long customerId);
+
     @Query("""
             select distinct c from Cart c
             left join fetch c.items i

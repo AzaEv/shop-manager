@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="page">
+    <div class="container narrow">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <form class="panel" th:action="@{/profile}" method="post">
+            <div class="profile-head">
+                <span class="avatar lg" th:text="${@ui.initial(customer.name)}">N</span>
+                <div>
+                    <h1>Профиль</h1>
+                    <p class="role-pill" th:text="${customer.role.title}">Роль</p>
+                    <p class="muted" th:text="'С нами с ' + ${@ui.when(customer.createdAt)}"></p>
+                </div>
+            </div>
+            <div class="grid-2">
+                <label class="field">Имя
+                    <input type="text" name="name" required maxlength="180" th:value="${customer.name}">
+                </label>
+                <label class="field">Телефон
+                    <input type="tel" name="phone" maxlength="40" th:value="${customer.phone}">
+                </label>
+            </div>
+            <label class="field">Email
+                <input type="email" name="email" required maxlength="180" th:value="${customer.email}" autocomplete="email">
+            </label>
+            <label class="field">Адрес доставки
+                <textarea name="address" rows="3" maxlength="500" th:text="${customer.address}"></textarea>
+            </label>
+            <h2>Пароль</h2>
+            <p class="muted">Текущий пароль нужен только если меняете email или задаёте новый пароль.</p>
+            <div class="grid-2">
+                <label class="field">Текущий пароль
+                    <input type="password" name="currentPassword" autocomplete="current-password">
+                </label>
+                <label class="field">Новый пароль
+                    <input type="password" name="newPassword" minlength="6" autocomplete="new-password" placeholder="Не короче 6 символов">
+                </label>
+            </div>
+            <button class="btn" type="submit">Сохранить</button>
+        </form>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<nav th:replace="~{fragments/layout :: tabbar}"></nav>
+</body>
+</html>

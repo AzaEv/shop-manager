@@ -24,4 +24,26 @@ public enum OrderStatus {
     public boolean canTransitionTo(OrderStatus next) {
         return TRANSITIONS.get(this).contains(next);
     }
+
+    public String getTitle() {
+        return switch (this) {
+            case NEW -> "Новый";
+            case PAID -> "Оплачен";
+            case PROCESSING -> "Собирается";
+            case SHIPPED -> "В пути";
+            case DELIVERED -> "Доставлен";
+            case CANCELLED -> "Отменён";
+        };
+    }
+
+    public int getStep() {
+        return switch (this) {
+            case NEW -> 1;
+            case PAID -> 2;
+            case PROCESSING -> 3;
+            case SHIPPED -> 4;
+            case DELIVERED -> 5;
+            case CANCELLED -> 0;
+        };
+    }
 }

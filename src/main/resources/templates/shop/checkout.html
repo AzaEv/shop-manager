@@ -1,19 +1,45 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="wrap narrow">
-    <div th:replace="~{fragments/layout :: flash}"></div>
-    <h1>Оформление заказа</h1>
-    <p th:if="${#lists.isEmpty(cart.items)}">Корзина пуста. <a href="/">В каталог</a></p>
-    <form th:if="${!#lists.isEmpty(cart.items)}" th:action="@{/checkout}" method="post">
-        <p th:text="'К оплате: ' + ${#numbers.formatDecimal(total, 1, 2)} + ' ₽'"></p>
-        <label>Адрес доставки
-            <textarea name="address" required rows="3"></textarea>
-        </label>
-        <button type="submit">Подтвердить заказ</button>
-    </form>
+<main class="page">
+    <div class="container">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <p><a class="back" href="/cart">← Корзина</a></p>
+        <div class="section-head"><h1>Оформление</h1></div>
+        <div class="empty" th:if="${#lists.isEmpty(cart.items)}">
+            <div class="big">🛒</div>
+            <h2>Сначала добавьте товары</h2>
+            <a class="btn" href="/">В каталог</a>
+        </div>
+        <div class="split" th:if="${!#lists.isEmpty(cart.items)}">
+            <form class="panel" th:action="@{/checkout}" method="post">
+                <h2>Куда везти</h2>
+                <label class="field">Адрес доставки
+                    <textarea name="address" required rows="4" maxlength="500" th:text="${account != null ? account.address : ''}"></textarea>
+                </label>
+                <label class="field check">
+                    <input type="checkbox" name="saveAddress" value="true" checked>
+                    Сохранить адрес в профиле
+                </label>
+                <button class="btn full" type="submit">Подтвердить заказ</button>
+            </form>
+            <aside class="summary">
+                <h2>Ваш заказ</h2>
+                <ul class="mini-lines">
+                    <li th:each="item : ${cart.items}">
+                        <span th:text="${item.product.name} + ' × ' + ${item.quantity}"></span>
+                        <span th:text="${@ui.rub(@ui.line(item.product.price, item.quantity))}"></span>
+                    </li>
+                </ul>
+                <p class="muted">К оплате</p>
+                <p class="total" th:text="${@ui.rub(total)}">0 ₽</p>
+            </aside>
+        </div>
+    </div>
 </main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<nav th:replace="~{fragments/layout :: tabbar}"></nav>
 </body>
 </html>

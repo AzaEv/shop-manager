@@ -1,25 +1,29 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="wrap">
-    <div th:replace="~{fragments/layout :: flash}"></div>
-    <h1>Мои заказы</h1>
-    <table th:if="${!#lists.isEmpty(orders)}">
-        <thead>
-        <tr><th>№</th><th>Дата</th><th>Статус</th><th>Сумма</th></tr>
-        </thead>
-        <tbody>
-        <tr th:each="order : ${orders}">
-            <td><a th:href="@{/orders/{id}(id=${order.id})}" th:text="${order.id}"></a></td>
-            <td th:text="${#temporals.format(order.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
-            <td><span class="status" th:text="${order.status}"></span></td>
-            <td th:text="${#numbers.formatDecimal(order.total, 1, 2)} + ' ₽'"></td>
-        </tr>
-        </tbody>
-    </table>
-    <p th:if="${#lists.isEmpty(orders)}" class="muted">Заказов пока нет.</p>
+<main class="page">
+    <div class="container narrow">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="section-head"><h1>Мои заказы</h1></div>
+        <a class="order-card" th:each="order : ${orders}" th:href="@{/orders/{id}(id=${order.id})}">
+            <div>
+                <div class="order-no" th:text="'№ ' + ${order.id}"></div>
+                <p class="muted" th:text="${@ui.when(order.createdAt)}"></p>
+            </div>
+            <span class="status" th:classappend="${'status-' + order.status}" th:text="${order.status.title}"></span>
+            <strong th:text="${@ui.rub(order.total)}"></strong>
+        </a>
+        <div class="empty" th:if="${#lists.isEmpty(orders)}">
+            <div class="big">📦</div>
+            <h2>Заказов пока нет</h2>
+            <p class="muted">Когда оформите покупку, она появится в этом списке.</p>
+            <a class="btn" href="/">В каталог</a>
+        </div>
+    </div>
 </main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<nav th:replace="~{fragments/layout :: tabbar}"></nav>
 </body>
 </html>

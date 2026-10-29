@@ -1,36 +1,58 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="wrap">
-    <div th:replace="~{fragments/layout :: flash}"></div>
-    <h1>Корзина</h1>
-    <table th:if="${!#lists.isEmpty(cart.items)}">
-        <thead>
-        <tr><th>Товар</th><th>Цена</th><th>Кол-во</th><th></th></tr>
-        </thead>
-        <tbody>
-        <tr th:each="item : ${cart.items}">
-            <td th:text="${item.product.name}"></td>
-            <td th:text="${#numbers.formatDecimal(item.product.price, 1, 2)}"></td>
-            <td>
-                <form th:action="@{/cart/items/{id}(id=${item.product.id})}" method="post" class="inline">
-                    <input type="number" name="quantity" min="0" th:value="${item.quantity}">
-                    <button type="submit">Обновить</button>
-                </form>
-            </td>
-            <td>
-                <form th:action="@{/cart/items/{id}/delete(id=${item.product.id})}" method="post">
-                    <button type="submit" class="ghost">Удалить</button>
-                </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    <p class="price" th:if="${!#lists.isEmpty(cart.items)}" th:text="'Итого: ' + ${#numbers.formatDecimal(total, 1, 2)} + ' ₽'"></p>
-    <a class="button" href="/checkout" th:if="${!#lists.isEmpty(cart.items)}">Оформить заказ</a>
-    <p th:if="${#lists.isEmpty(cart.items)}" class="muted">Корзина пуста. <a href="/">В каталог</a></p>
+<main class="page">
+    <div class="container">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="section-head"><h1>Корзина</h1></div>
+        <div class="cart-layout" th:if="${!#lists.isEmpty(cart.items)}">
+            <div>
+                <article class="cart-row" th:each="item : ${cart.items}">
+                    <a class="art sm" th:classappend="${'tone-' + @ui.tone(item.product.category.slug)}"
+                       th:href="@{/products/{id}(id=${item.product.id})}">
+                        <span th:text="${@ui.emoji(item.product.category.slug)}">🛍️</span>
+                    </a>
+                    <div>
+                        <h2><a th:href="@{/products/{id}(id=${item.product.id})}" th:text="${item.product.name}">Товар</a></h2>
+                        <p class="muted" th:text="${item.product.category.name}"></p>
+                        <p th:text="${@ui.rub(item.product.price)}"></p>
+                    </div>
+                    <div>
+                        <p class="line-total" th:text="${@ui.rub(@ui.line(item.product.price, item.quantity))}"></p>
+                        <div class="row-actions">
+                            <form th:action="@{/cart/items/{id}(id=${item.product.id})}" method="post">
+                                <div class="stepper" data-stepper data-autosubmit="true">
+                                    <button type="button" data-step="-1" aria-label="Меньше">−</button>
+                                    <input type="number" name="quantity" min="0" th:max="${item.product.stock}" th:value="${item.quantity}" aria-label="Количество">
+                                    <button type="button" data-step="1" aria-label="Больше">+</button>
+                                </div>
+                            </form>
+                            <form th:action="@{/cart/items/{id}/delete(id=${item.product.id})}" method="post">
+                                <button type="submit" class="btn ghost sm" onclick="return confirm('Убрать товар из корзины?')">Удалить</button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <aside class="summary">
+                <p class="muted">К оплате</p>
+                <p class="total" th:text="${@ui.rub(total)}">0 ₽</p>
+                <p class="month" th:text="'или от ' + ${@ui.monthly(total)} + ' / мес'"></p>
+                <a class="btn full" href="/checkout">Оформить заказ</a>
+                <p style="margin-top: 12px;"><a class="back" href="/">Продолжить покупки</a></p>
+            </aside>
+        </div>
+        <div class="empty" th:if="${#lists.isEmpty(cart.items)}">
+            <div class="big">🛒</div>
+            <h2>Корзина пустая</h2>
+            <p class="muted">Добавьте товар из каталога — он появится здесь.</p>
+            <a class="btn" href="/">В каталог</a>
+        </div>
+    </div>
 </main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<nav th:replace="~{fragments/layout :: tabbar}"></nav>
 </body>
 </html>
