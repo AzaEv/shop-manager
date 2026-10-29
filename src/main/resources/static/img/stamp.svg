@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="92" fill="none" stroke="#6d28d9" stroke-width="7"/>
+  <circle cx="100" cy="100" r="76" fill="none" stroke="#6d28d9" stroke-width="2"/>
+  <text x="100" y="110" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="32" font-weight="700" fill="#5b21b6">NOVA</text>
+  <defs>
+    <path id="stamp-top" d="M28,104 a72,72 0 1,1 144,0"/>
+    <path id="stamp-bottom" d="M36,112 a64,64 0 1,0 128,0"/>
+  </defs>
+  <text fill="#5b21b6" font-size="13" font-family="Segoe UI, sans-serif" letter-spacing="1.5">
+    <textPath href="#stamp-top" startOffset="12%"> "%</textPath>
+  </text>
+  <text fill="#5b21b6" font-size="13" font-family="Segoe UI, sans-serif" letter-spacing="2">
+    <textPath href="#stamp-bottom" startOffset="30%">'</textPath>
+  </text>
+</svg>

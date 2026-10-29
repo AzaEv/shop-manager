@@ -100,6 +100,10 @@ public class ShopOrder {
         return createdAt;
     }
 
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public List<OrderItem> getItems() {
         return items;
     }

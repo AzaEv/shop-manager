@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
@@ -297,5 +298,48 @@ class ShopScenarioTest {
 
         mockMvc.perform(get("/profile").accept(MediaType.TEXT_HTML))
                 .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    void t17PaymentSimulationReturnsPdfReceipt() throws Exception {
+        mockMvc.perform(post("/api/cart/items")
+                .with(httpBasic("customer@shop.local", "customer123"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"productId\":1,\"quantity\":1}"))
+                .andExpect(status().isOk());
+
+        MvcResult checkout = mockMvc.perform(post("/checkout")
+                        .with(httpBasic("customer@shop.local", "customer123"))
+                        .with(csrf())
+                        .param("address", "Ташкент, ул. Бабура, 22"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("/orders/*/pay"))
+                .andReturn();
+
+        String payUrl = checkout.getResponse().getRedirectedUrl();
+        mockMvc.perform(get(payUrl).with(httpBasic("customer@shop.local", "customer123")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Оплатить")))
+                .andExpect(content().string(containsString("симуляция")));
+
+        MvcResult paid = mockMvc.perform(post(payUrl)
+                        .with(httpBasic("customer@shop.local", "customer123"))
+                        .with(csrf())
+                        .param("card", "4242 4242 4242 4242")
+                        .param("expiry", "12/28")
+                        .param("cvc", "123"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("/orders/*/receipt"))
+                .andReturn();
+
+        String receiptUrl = paid.getResponse().getRedirectedUrl();
+        mockMvc.perform(get(receiptUrl).with(httpBasic("customer@shop.local", "customer123")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Печать магазина")));
+
+        mockMvc.perform(get(receiptUrl + ".pdf").with(httpBasic("customer@shop.local", "customer123")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andExpect(content().string(containsString("%PDF")));
     }
 }

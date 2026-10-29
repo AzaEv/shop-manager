@@ -6,10 +6,16 @@
 <main class="page">
     <div class="container">
         <div th:replace="~{fragments/layout :: flash}"></div>
-        <div class="section-head"><h1>Корзина</h1></div>
-        <div class="cart-layout" th:if="${!#lists.isEmpty(cart.items)}">
+        <div class="section-head">
             <div>
-                <article class="cart-row" th:each="item : ${cart.items}">
+                <p class="kicker">Ваши покупки</p>
+                <h1>Корзина</h1>
+                <p class="muted" th:if="${!#lists.isEmpty(cart.items)}" th:text="'Позиций: ' + ${#lists.size(cart.items)}"></p>
+            </div>
+        </div>
+        <div class="cart-layout" th:if="${!#lists.isEmpty(cart.items)}">
+            <div class="cart-list">
+                <article class="cart-row" th:each="item, iter : ${cart.items}" th:style="'--i:' + ${iter.index}">
                     <a class="art sm" th:classappend="${'tone-' + @ui.tone(item.product.category.slug)}"
                        th:href="@{/products/{id}(id=${item.product.id})}">
                         <img th:if="${@ui.photo(item.product.sku) != null}" th:src="@{${@ui.photo(item.product.sku)}}" th:alt="${item.product.name}">
@@ -31,18 +37,22 @@
                                 </div>
                             </form>
                             <form th:action="@{/cart/items/{id}/delete(id=${item.product.id})}" method="post">
-                                <button type="submit" class="btn ghost sm" onclick="return confirm('Убрать товар из корзины?')">Удалить</button>
+                                <button type="submit" class="btn ghost sm cart-remove" onclick="return confirm('Убрать товар из корзины?')">Убрать</button>
                             </form>
                         </div>
                     </div>
                 </article>
             </div>
             <aside class="summary">
-                <p class="muted">К оплате</p>
+                <p class="kicker">К оплате</p>
+                <ul class="mini-lines">
+                    <li><span>Товары</span><strong th:text="${@ui.rub(total)}">0 ₽</strong></li>
+                    <li><span>Доставка</span><strong>Бесплатно</strong></li>
+                </ul>
                 <p class="total" th:text="${@ui.rub(total)}">0 ₽</p>
                 <p class="month" th:text="'или от ' + ${@ui.monthly(total)} + ' / мес'"></p>
                 <a class="btn full" href="/checkout">Оформить заказ</a>
-                <p style="margin-top: 12px;"><a class="back" href="/">Продолжить покупки</a></p>
+                <p style="margin-top: 14px;"><a class="back" href="/">Продолжить покупки</a></p>
             </aside>
         </div>
         <div class="empty" th:if="${#lists.isEmpty(cart.items)}">

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="page">
+    <div class="container narrow">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <p><a class="back" th:href="@{/orders/{id}(id=${order.id})}">← К заказу</a></p>
+        <div class="pay-layout">
+            <section class="panel">
+                <p class="kicker">Учебная оплата</p>
+                <h1 th:text="'Заказ № ' + ${order.id}">Заказ</h1>
+                <p class="muted">Деньги не списываются. Номер карты нигде не сохраняется — это симуляция покупки.</p>
+                <form class="pay-sim" th:action="@{/orders/{id}/pay(id=${order.id})}" method="post">
+                    <label class="field">Имя на карте
+                        <input type="text" name="holder" required maxlength="80" autocomplete="off"
+                               th:value="${order.customer.name}">
+                    </label>
+                    <label class="field">Номер карты
+                        <input type="text" name="card" required inputmode="numeric" autocomplete="off"
+                               maxlength="23" value="4242 4242 4242 4242">
+                    </label>
+                    <div class="grid-2">
+                        <label class="field">Срок
+                            <input type="text" name="expiry" required maxlength="5" autocomplete="off" value="12/28" placeholder="ММ/ГГ">
+                        </label>
+                        <label class="field">Код
+                            <input type="text" name="cvc" required maxlength="3" autocomplete="off" value="123">
+                        </label>
+                    </div>
+                    <button class="btn full" type="submit">Оплатить</button>
+                </form>
+            </section>
+            <aside class="summary">
+                <p class="kicker">К оплате</p>
+                <ul class="mini-lines">
+                    <li th:each="item : ${order.items}">
+                        <span th:text="${item.productName} + ' × ' + ${item.quantity}"></span>
+                        <span th:text="${@ui.rub(@ui.line(item.unitPrice, item.quantity))}"></span>
+                    </li>
+                </ul>
+                <p class="total" th:text="${@ui.rub(order.total)}">0 ₽</p>
+                <p class="month" th:text="${order.address}"></p>
+            </aside>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<nav th:replace="~{fragments/layout :: tabbar}"></nav>
+</body>
+</html>

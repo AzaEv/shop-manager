@@ -5,3 +5,5 @@ PHN-X15, PHN-X15P, PHN-AIR, PHN-MINI, AUD-WB1, AUD-WH1, AUD-MIC, OFF-NB5, OFF-PE
 
 Pexels License (https://www.pexels.com/license/):
 AUD-WS1, OFF-DL2, OFF-CH1, ACC-USBC, ACC-CS1, hero/home.jpg
+
+Шрифт чека: DejaVu Sans 2.37 (лицензия Bitstream Vera / DejaVu), файл fonts/DejaVuSans.ttf.

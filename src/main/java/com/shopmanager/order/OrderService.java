@@ -95,6 +95,18 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+    @Transactional
+    public ShopOrder pay(Customer customer, Long orderId) {
+        ShopOrder order = get(orderId);
+        if (!order.getCustomer().getId().equals(customer.getId())) {
+            throw new NotFoundException("Заказ не найден: " + orderId);
+        }
+        if (order.getStatus() != OrderStatus.NEW) {
+            throw new BusinessException("Этот заказ уже нельзя оплатить");
+        }
+        return changeStatus(orderId, OrderStatus.PAID);
+    }
+
     private static void touch(ShopOrder order) {
         order.getItems().forEach(item -> {
             if (item.getProduct() != null) {

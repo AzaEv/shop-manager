@@ -76,4 +76,8 @@ public class OrderStatusHistory {
     public Instant getChangedAt() {
         return changedAt;
     }
+
+    public void setChangedAt(Instant changedAt) {
+        this.changedAt = changedAt;
+    }
 }

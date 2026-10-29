@@ -37,6 +37,11 @@
                 </table>
             </div>
             <p class="price-xl" th:text="${@ui.rub(order.total)}"></p>
+            <p class="actions">
+                <a class="btn" th:if="${order.status.name() == 'NEW'}" th:href="@{/orders/{id}/pay(id=${order.id})}">Оплатить</a>
+                <a class="btn" th:if="${order.status.name() != 'NEW' and order.status.name() != 'CANCELLED'}"
+                   th:href="@{/orders/{id}/receipt(id=${order.id})}">Чек</a>
+            </p>
             <h2>История</h2>
             <ol class="timeline">
                 <li th:each="entry : ${order.history}">

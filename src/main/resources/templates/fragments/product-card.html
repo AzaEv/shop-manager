@@ -12,10 +12,14 @@
     <p class="month" th:text="'от ' + ${@ui.monthly(product.price)} + ' / мес'">от 0 ₽ / мес</p>
     <p class="low" th:if="${product.stock > 0 and product.stock < 5}" th:text="'Осталось ' + ${product.stock} + ' шт.'"></p>
     <div class="card-actions">
-        <form class="buy" th:if="${product.active and product.stock > 0}" sec:authorize="hasRole('CUSTOMER')"
+        <form class="buy card-buy" th:if="${product.active and product.stock > 0}" sec:authorize="hasRole('CUSTOMER')"
               th:action="@{/cart/items}" method="post">
             <input type="hidden" name="productId" th:value="${product.id}">
-            <input type="hidden" name="quantity" value="1">
+            <div class="stepper" data-stepper>
+                <button type="button" data-step="-1" aria-label="Меньше">−</button>
+                <input type="number" name="quantity" min="1" th:max="${product.stock}" value="1" aria-label="Количество">
+                <button type="button" data-step="1" aria-label="Больше">+</button>
+            </div>
             <button class="btn sm full" type="submit">В корзину</button>
         </form>
         <p class="muted tiny" th:if="${!product.active or product.stock < 1}">Нет в наличии</p>

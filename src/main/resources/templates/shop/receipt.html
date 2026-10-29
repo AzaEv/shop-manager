@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="page">
+    <div class="container narrow">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <p><a class="back" th:href="@{/orders/{id}(id=${order.id})}">← К заказу</a></p>
+        <article class="receipt">
+            <div class="receipt-head">
+                <div>
+                    <p class="kicker">nova</p>
+                    <h1 th:text="'Чек № NV-' + ${order.id}">Чек</h1>
+                    <p class="muted" th:text="${@ui.when(order.createdAt)}"></p>
+                </div>
+                <img class="stamp" th:src="@{/img/stamp.svg}" alt="Печать магазина nova">
+            </div>
+            <p th:text="${order.customer.name}"></p>
+            <p class="muted" th:text="${order.customer.email}"></p>
+            <p th:text="'Адрес: ' + ${order.address}"></p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr><th>Товар</th><th>Кол-во</th><th>Цена</th><th>Сумма</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="item : ${order.items}">
+                        <td>
+                            <span th:text="${item.productName}"></span>
+                            <span class="muted tiny" th:text="${item.sku}"></span>
+                        </td>
+                        <td th:text="${item.quantity}"></td>
+                        <td th:text="${@ui.rub(item.unitPrice)}"></td>
+                        <td th:text="${@ui.rub(@ui.line(item.unitPrice, item.quantity))}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="price-xl" th:text="${@ui.rub(order.total)}"></p>
+            <p class="muted">Оплата прошла в учебной симуляции. Карта не сохранялась.</p>
+            <a class="btn" th:href="@{/orders/{id}/receipt.pdf(id=${order.id})}">Скачать чек PDF</a>
+        </article>
+        <iframe class="receipt-download" title="Загрузка чека" th:src="@{/orders/{id}/receipt.pdf(id=${order.id})}"></iframe>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<nav th:replace="~{fragments/layout :: tabbar}"></nav>
+</body>
+</html>

@@ -167,4 +167,30 @@
             });
         });
     });
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.querySelectorAll("form.pay-sim").forEach(function (form) {
+        form.addEventListener("submit", function (event) {
+            if (form.dataset.ready === "true" || reduced) {
+                return;
+            }
+            event.preventDefault();
+            const button = form.querySelector("button[type='submit']");
+            if (button) {
+                button.disabled = true;
+                button.textContent = "Проводим оплату…";
+            }
+            window.setTimeout(function () {
+                form.dataset.ready = "true";
+                if (button) {
+                    button.disabled = false;
+                }
+                if (typeof form.requestSubmit === "function") {
+                    form.requestSubmit();
+                } else {
+                    form.submit();
+                }
+            }, 900);
+        });
+    });
 })();
