@@ -1,6 +1,7 @@
 package com.shopmanager.admin;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -26,6 +27,7 @@ import com.shopmanager.customer.Role;
 import com.shopmanager.order.OrderService;
 import com.shopmanager.order.OrderStatus;
 import com.shopmanager.report.ReportService;
+import com.shopmanager.report.ReportView;
 
 @Controller
 @RequestMapping("/admin")
@@ -58,21 +60,48 @@ public class AdminWebController {
     }
 
     @GetMapping("/report")
-    public String report(Model model) {
-        model.addAttribute("report", reportService.build());
+    public String report(
+            @RequestParam(defaultValue = "day") String group,
+            @RequestParam(defaultValue = "label") String sort,
+            @RequestParam(defaultValue = "asc") String dir,
+            Model model) {
+        ReportView view = ReportView.of(group, sort, dir);
+        model.addAttribute("report", reportService.build(view));
+        model.addAttribute("group", view.group().code());
+        model.addAttribute("groupColumn", view.group().column());
+        model.addAttribute("sort", view.sort().code());
+        model.addAttribute("dir", view.dir());
         model.addAttribute("pageTitle", "Аналитический отчёт");
         return "admin/report";
     }
 
     @GetMapping("/report.csv")
-    public ResponseEntity<byte[]> reportCsv() {
-        byte[] body = reportService.toCsv();
+    public ResponseEntity<byte[]> reportCsv(
+            @RequestParam(defaultValue = "day") String group,
+            @RequestParam(defaultValue = "label") String sort,
+            @RequestParam(defaultValue = "asc") String dir) {
+        byte[] body = reportService.toCsv(ReportView.of(group, sort, dir));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
-                        .filename("shop-report.csv")
+                        .filename("отчёт-продажи.csv", StandardCharsets.UTF_8)
                         .build()
                         .toString())
                 .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
+                .body(body);
+    }
+
+    @GetMapping("/report.ods")
+    public ResponseEntity<byte[]> reportOds(
+            @RequestParam(defaultValue = "day") String group,
+            @RequestParam(defaultValue = "label") String sort,
+            @RequestParam(defaultValue = "asc") String dir) {
+        byte[] body = reportService.toOds(ReportView.of(group, sort, dir));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename("отчёт-продажи.ods", StandardCharsets.UTF_8)
+                        .build()
+                        .toString())
+                .contentType(MediaType.parseMediaType("application/vnd.oasis.opendocument.spreadsheet"))
                 .body(body);
     }
 

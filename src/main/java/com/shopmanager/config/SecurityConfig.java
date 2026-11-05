@@ -48,7 +48,7 @@ public class SecurityConfig {
                         .hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/api/orders")
                         .hasRole("CUSTOMER")
-                        .requestMatchers("/admin/report.csv", "/api/admin/report.csv")
+                        .requestMatchers("/admin/report.csv", "/admin/report.ods", "/api/admin/report.csv")
                         .hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/admin/customers/*/role")
                         .hasRole("ADMIN")

@@ -2,10 +2,12 @@ package com.shopmanager.api;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.shopmanager.report.ReportDtos.ShopAnalytics;
 import com.shopmanager.report.ReportService;
+import com.shopmanager.report.ReportView;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -18,7 +20,10 @@ public class ReportApiController {
     }
 
     @GetMapping("/report")
-    public ShopAnalytics report() {
-        return reportService.build();
+    public ShopAnalytics report(
+            @RequestParam(defaultValue = "day") String group,
+            @RequestParam(defaultValue = "label") String sort,
+            @RequestParam(defaultValue = "asc") String dir) {
+        return reportService.build(ReportView.of(group, sort, dir));
     }
 }

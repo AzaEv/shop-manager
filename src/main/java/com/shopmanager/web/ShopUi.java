@@ -87,6 +87,16 @@ public class ShopUi {
         return "/img/products/" + key + ".jpg";
     }
 
+    public String categoryPhoto(String slug) {
+        if (slug == null) {
+            return null;
+        }
+        return switch (slug) {
+            case "phones", "audio", "office", "accessories", "home" -> "/img/categories/" + slug + ".jpg";
+            default -> null;
+        };
+    }
+
     public String heroPhoto(String slug) {
         if (slug == null) {
             return "/img/hero/phones.jpg";

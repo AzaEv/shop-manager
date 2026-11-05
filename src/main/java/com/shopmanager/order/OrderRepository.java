@@ -39,4 +39,13 @@ public interface OrderRepository extends JpaRepository<ShopOrder, Long> {
             order by sum(i.unitPrice * i.quantity) desc
             """)
     List<Object[]> topProducts();
+
+    @Query("""
+            select distinct o from ShopOrder o
+            left join fetch o.items i
+            left join fetch i.product p
+            left join fetch p.category
+            where o.status <> com.shopmanager.order.OrderStatus.CANCELLED
+            """)
+    List<ShopOrder> findRevenueOrders();
 }

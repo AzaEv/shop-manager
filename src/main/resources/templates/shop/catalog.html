@@ -39,8 +39,11 @@
             <a th:each="category : ${categories}"
                th:href="@{/(categoryId=${category.id}, q=${q}, sort=${sort}, dir=${dir})}"
                th:classappend="${selectedCategoryId == category.id} ? 'is-active'">
-                <span class="bubble" th:classappend="${'tone-' + @ui.tone(category.slug)}"
-                      th:text="${@ui.emoji(category.slug)}">🛍️</span>
+                <span class="bubble" th:classappend="${(@ui.categoryPhoto(category.slug) != null ? 'has-photo ' : '') + 'tone-' + @ui.tone(category.slug)}">
+                    <img th:if="${@ui.categoryPhoto(category.slug) != null}"
+                         th:src="@{${@ui.categoryPhoto(category.slug)}}" alt="">
+                    <span th:if="${@ui.categoryPhoto(category.slug) == null}" th:text="${@ui.emoji(category.slug)}">🛍️</span>
+                </span>
                 <span th:text="${category.name}">Категория</span>
             </a>
         </nav>

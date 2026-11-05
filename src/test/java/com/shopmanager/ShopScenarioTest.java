@@ -19,7 +19,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.zip.ZipInputStream;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -37,6 +39,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shopmanager.catalog.Category;
 import com.shopmanager.catalog.CategoryRepository;
+import com.shopmanager.catalog.ProductRepository;
 import com.shopmanager.catalog.ProductService;
 import com.shopmanager.common.BusinessException;
 import com.shopmanager.customer.Customer;
@@ -59,6 +62,9 @@ class ShopScenarioTest {
 
     @Autowired
     ProductService productService;
+
+    @Autowired
+    ProductRepository productRepository;
 
     @Autowired
     CustomerService customerService;
@@ -247,7 +253,32 @@ class ShopScenarioTest {
         mockMvc.perform(get("/admin/report.csv").with(httpBasic("admin@shop.local", "admin123")))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("text/csv"))
-                .andExpect(content().string(containsString("summary,revenue")));
+                .andExpect(content().string(containsString("Показатель;Значение")))
+                .andExpect(content().string(containsString("Выручка, руб.")))
+                .andExpect(content().string(containsString("Статус;Заказов")));
+        MvcResult ods = mockMvc.perform(get("/admin/report.ods").with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/vnd.oasis.opendocument.spreadsheet"))
+                .andReturn();
+        mockMvc.perform(get("/admin/report.ods").with(httpBasic("customer@shop.local", "customer123")))
+                .andExpect(status().isForbidden());
+        String sheet = unzip(ods.getResponse().getContentAsByteArray(), "content.xml");
+        assertTrue(sheet.contains("table:name=\"Сводка\""));
+        assertTrue(sheet.contains("table:name=\"Заказы\""));
+        assertTrue(sheet.contains("Отчёт о продажах nova"));
+        assertTrue(sheet.contains("Выручка"));
+    }
+
+    private static String unzip(byte[] archive, String name) throws Exception {
+        try (ZipInputStream zip = new ZipInputStream(new java.io.ByteArrayInputStream(archive))) {
+            java.util.zip.ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (name.equals(entry.getName())) {
+                    return new String(zip.readAllBytes(), StandardCharsets.UTF_8);
+                }
+            }
+        }
+        return "";
     }
 
     @Test
@@ -341,5 +372,73 @@ class ShopScenarioTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_PDF))
                 .andExpect(content().string(containsString("%PDF")));
+
+        mockMvc.perform(get("/api/admin/report")
+                        .param("group", "model")
+                        .param("sort", "amount")
+                        .param("dir", "desc")
+                        .with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.breakdown[0].label").value("Nova X15"));
+
+        mockMvc.perform(get("/admin/report")
+                        .param("group", "day")
+                        .param("sort", "amount")
+                        .param("dir", "asc")
+                        .with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Сравнение выручки")))
+                .andExpect(content().string(containsString("По дням")))
+                .andExpect(content().string(containsString("is-sorted")));
+
+        mockMvc.perform(get("/admin/report.csv")
+                        .param("group", "category")
+                        .param("sort", "quantity")
+                        .param("dir", "desc")
+                        .with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Категория;Заказов;Продано, шт.;Выручка, руб.")))
+                .andExpect(content().string(containsString("Смартфоны")));
+    }
+
+    @Test
+    void t18ReportSortsModelsByRevenue() throws Exception {
+        String email = "report-" + UUID.randomUUID() + "@shop.local";
+        customerService.register(email, "Отчёт", "+7009", "secret12", Role.CUSTOMER);
+        long nova = productRepository.findBySku("PHN-X15").orElseThrow().getId();
+        long buds = productRepository.findBySku("AUD-WB1").orElseThrow().getId();
+
+        mockMvc.perform(post("/api/cart/items")
+                        .with(httpBasic(email, "secret12"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productId\":" + nova + ",\"quantity\":1}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/cart/items")
+                        .with(httpBasic(email, "secret12"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productId\":" + buds + ",\"quantity\":1}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/orders")
+                        .with(httpBasic(email, "secret12"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"address\":\"Самарканд, Регистан 1\"}"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/admin/report")
+                        .param("group", "model")
+                        .param("sort", "amount")
+                        .param("dir", "asc")
+                        .with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.breakdown[0].label").value("Wave Buds"))
+                .andExpect(jsonPath("$.breakdown[1].label").value("Nova X15"));
+
+        mockMvc.perform(get("/api/admin/report")
+                        .param("group", "category")
+                        .param("sort", "amount")
+                        .param("dir", "desc")
+                        .with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.breakdown[0].label").value("Смартфоны"));
     }
 }

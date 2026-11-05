@@ -13,7 +13,7 @@
     <p class="low" th:if="${product.stock > 0 and product.stock < 5}" th:text="'Осталось ' + ${product.stock} + ' шт.'"></p>
     <div class="card-actions">
         <form class="buy card-buy" th:if="${product.active and product.stock > 0}" sec:authorize="hasRole('CUSTOMER')"
-              th:action="@{/cart/items}" method="post">
+              th:action="@{/cart/items}" method="post" th:attr="data-product-name=${product.name}">
             <input type="hidden" name="productId" th:value="${product.id}">
             <div class="stepper" data-stepper>
                 <button type="button" data-step="-1" aria-label="Меньше">−</button>

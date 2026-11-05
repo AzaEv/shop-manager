@@ -43,7 +43,7 @@
                     </svg>
                     <span class="icon-label">Заказы</span>
                 </a>
-                <a class="icon-link" href="/cart" sec:authorize="hasRole('CUSTOMER')">
+                <a class="icon-link" href="/cart" data-cart-link sec:authorize="hasRole('CUSTOMER')">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M5 6h15l-1.5 9h-11z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
                         <path d="M5 6L4 3H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -90,7 +90,11 @@
         <div class="catalog-panel" id="catalogPanel">
             <div class="container cat-grid">
                 <a th:each="category : ${navCategories}" th:href="@{/(categoryId=${category.id})}">
-                    <span class="bubble sm" th:classappend="${'tone-' + @ui.tone(category.slug)}" th:text="${@ui.emoji(category.slug)}">🛍️</span>
+                    <span class="bubble sm" th:classappend="${(@ui.categoryPhoto(category.slug) != null ? 'has-photo ' : '') + 'tone-' + @ui.tone(category.slug)}">
+                        <img th:if="${@ui.categoryPhoto(category.slug) != null}"
+                             th:src="@{${@ui.categoryPhoto(category.slug)}}" alt="">
+                        <span th:if="${@ui.categoryPhoto(category.slug) == null}" th:text="${@ui.emoji(category.slug)}">🛍️</span>
+                    </span>
                     <span th:text="${category.name}">Категория</span>
                 </a>
             </div>
@@ -140,7 +144,7 @@
 <nav th:fragment="tabbar" class="tabbar" aria-label="Нижнее меню">
     <a class="tab" href="/">Главная</a>
     <button type="button" class="tab" data-catalog-toggle>Каталог</button>
-    <a class="tab" href="/cart" sec:authorize="hasRole('CUSTOMER')">
+    <a class="tab" href="/cart" data-cart-link sec:authorize="hasRole('CUSTOMER')">
         Корзина
         <span class="badge" th:if="${cartCount > 0}" th:text="${cartCount}">0</span>
     </a>

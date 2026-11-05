@@ -53,12 +53,16 @@
         if (accountMenu && accountToggle && !accountMenu.contains(event.target) && !accountToggle.contains(event.target)) {
             setAccount(false);
         }
+        if (cartNote && !cartNote.contains(event.target) && !event.target.closest("form.buy")) {
+            closeCartNote();
+        }
     });
 
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
             setCatalog(false);
             setAccount(false);
+            closeCartNote();
         }
     });
 
@@ -128,14 +132,174 @@
         restart();
     }
 
-    document.querySelectorAll("form.buy").forEach(function (form) {
-        form.addEventListener("submit", function () {
-            const button = form.querySelector("button[type='submit']");
-            if (!button) {
+    let cartNote = null;
+
+    function closeCartNote() {
+        if (!cartNote) {
+            return;
+        }
+        cartNote.remove();
+        cartNote = null;
+    }
+
+    function showCartNote(title, name, detail, withCartLink) {
+        closeCartNote();
+        const note = document.createElement("aside");
+        note.className = "cart-note" + (withCartLink ? "" : " is-error");
+        note.setAttribute("role", withCartLink ? "status" : "alert");
+
+        const close = document.createElement("button");
+        close.type = "button";
+        close.className = "cart-note-close";
+        close.setAttribute("aria-label", "Закрыть");
+        close.textContent = "×";
+        close.addEventListener("click", closeCartNote);
+
+        const kicker = document.createElement("p");
+        kicker.className = "kicker";
+        kicker.textContent = title;
+
+        note.appendChild(close);
+        note.appendChild(kicker);
+        if (name) {
+            const strong = document.createElement("strong");
+            strong.textContent = name;
+            note.appendChild(strong);
+        }
+        const line = document.createElement("p");
+        line.className = "muted";
+        line.textContent = detail;
+        note.appendChild(line);
+        if (withCartLink) {
+            const link = document.createElement("a");
+            link.className = "btn sm full";
+            link.href = "/cart";
+            link.textContent = "Открыть корзину";
+            note.appendChild(link);
+        }
+        document.body.appendChild(note);
+        cartNote = note;
+    }
+
+    function cartUnits(cart) {
+        return (cart.items || []).reduce(function (sum, item) {
+            return sum + Number(item.quantity || 0);
+        }, 0);
+    }
+
+    function rub(value) {
+        const amount = Number(value);
+        if (!Number.isFinite(amount)) {
+            return "";
+        }
+        return new Intl.NumberFormat("ru-RU", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount) + " ₽";
+    }
+
+    function setCartCount(count) {
+        document.querySelectorAll("[data-cart-link]").forEach(function (link) {
+            let badge = link.querySelector(".badge");
+            if (count < 1) {
+                if (badge) {
+                    badge.remove();
+                }
                 return;
             }
-            button.classList.add("is-loading");
-            button.textContent = "Добавляем…";
+            if (!badge) {
+                badge = document.createElement("span");
+                badge.className = "badge";
+                const label = link.querySelector(".icon-label");
+                if (label) {
+                    link.insertBefore(badge, label);
+                } else {
+                    link.appendChild(badge);
+                }
+            }
+            badge.textContent = String(count);
+            badge.classList.remove("is-pop");
+            void badge.offsetWidth;
+            badge.classList.add("is-pop");
+        });
+    }
+
+    document.querySelectorAll("form.buy").forEach(function (form) {
+        let ticket = 0;
+        form.addEventListener("submit", function (event) {
+            if (typeof window.fetch !== "function") {
+                return;
+            }
+            event.preventDefault();
+            const button = form.querySelector("button[type='submit']");
+            const productInput = form.querySelector("[name='productId']");
+            const quantityInput = form.querySelector("[name='quantity']");
+            const productId = Number(productInput && productInput.value);
+            const quantity = Number(quantityInput && quantityInput.value);
+            const productName = form.getAttribute("data-product-name") || "Товар";
+            const idleLabel = "В корзину";
+            if (!productId || quantity < 1) {
+                showCartNote("Не добавлено", "", "Укажите количество больше нуля", false);
+                return;
+            }
+            const mine = ++ticket;
+            if (button) {
+                button.disabled = true;
+                button.classList.add("is-loading");
+                button.textContent = "Добавляем…";
+            }
+            window.fetch("/api/cart/items", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({ productId: productId, quantity: quantity })
+            }).then(function (response) {
+                const type = response.headers.get("content-type") || "";
+                if (!type.includes("json")) {
+                    throw new Error("Сессия истекла. Войдите снова и повторите.");
+                }
+                return response.json().then(function (body) {
+                    if (!response.ok) {
+                        throw new Error(body.message || "Не удалось добавить товар");
+                    }
+                    return body;
+                });
+            }).then(function (cart) {
+                const count = cartUnits(cart);
+                const line = (cart.items || []).find(function (item) {
+                    return Number(item.productId) === productId;
+                });
+                const inCart = line ? line.quantity : quantity;
+                setCartCount(count);
+                showCartNote(
+                    "Добавлено в корзину",
+                    productName,
+                    inCart + " шт. этого товара · итого " + rub(cart.total),
+                    true
+                );
+                if (button) {
+                    button.textContent = "Добавлено";
+                }
+            }).catch(function (error) {
+                showCartNote("Не добавлено", productName, error.message || "Не удалось добавить товар", false);
+                if (button && ticket === mine) {
+                    button.textContent = idleLabel;
+                }
+            }).finally(function () {
+                if (!button || ticket !== mine) {
+                    return;
+                }
+                button.disabled = false;
+                button.classList.remove("is-loading");
+                window.setTimeout(function () {
+                    if (ticket === mine) {
+                        button.textContent = idleLabel;
+                    }
+                }, 1200);
+            });
         });
     });
 

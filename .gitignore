@@ -13,3 +13,8 @@ out/
 application-local.yml
 .DS_Store
 Thumbs.db
+
+# учебные отчёты и дневник остаются только на компьютере
+docs/
+tools/__pycache__/
+*.pyc

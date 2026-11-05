@@ -13,6 +13,9 @@ public class ReportDtos {
     public record ProductRow(String productName, long quantity, BigDecimal amount) {
     }
 
+    public record BreakdownRow(String label, long orderCount, long quantity, BigDecimal amount, int percentOfRevenue) {
+    }
+
     public record ShopAnalytics(
             long customerCount,
             long productCount,
@@ -21,6 +24,7 @@ public class ReportDtos {
             BigDecimal revenue,
             BigDecimal averageCheck,
             List<StatusRow> byStatus,
-            List<ProductRow> topProducts) {
+            List<ProductRow> topProducts,
+            List<BreakdownRow> breakdown) {
     }
 }
