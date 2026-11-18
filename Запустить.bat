@@ -3,7 +3,8 @@ chcp 65001 >nul
 cd /d "%~dp0"
 title Shop Manager
 
-set "JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot"
+set "JAVA_HOME="
+for /d %%D in ("C:\Program Files\Eclipse Adoptium\jdk-17*") do set "JAVA_HOME=%%~fD"
 if not exist "%JAVA_HOME%\bin\java.exe" (
   echo Не найден JDK 17:
   echo %JAVA_HOME%
