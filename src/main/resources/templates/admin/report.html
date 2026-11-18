@@ -10,21 +10,69 @@
         <div class="section-head">
             <div>
                 <h1>Продажи</h1>
-                <p class="muted">Выручка — все заказы, кроме отменённых. Средний чек — выручка, делённая на число таких заказов.</p>
+                <p class="muted report-period" th:text="${report.period}">Период за всё время</p>
             </div>
             <div class="section-actions" sec:authorize="hasRole('ADMIN')">
-                <a class="btn" th:href="@{/admin/report.ods(group=${group}, sort=${sort}, dir=${dir})}">Скачать для LibreOffice</a>
-                <a class="btn ghost" th:href="@{/admin/report.csv(group=${group}, sort=${sort}, dir=${dir})}">CSV</a>
+                <a class="btn" th:href="@{${links.export('/admin/report.ods')}}">Скачать для LibreOffice</a>
+                <a class="btn ghost" th:href="@{${links.export('/admin/report.csv')}}">CSV</a>
             </div>
         </div>
+
+        <nav class="filters" aria-label="Быстрый выбор периода">
+            <a th:each="preset : ${links.presets()}" th:href="@{${preset.url}}" th:text="${preset.label}"
+               th:classappend="${preset.active} ? 'is-active'">7 дней</a>
+        </nav>
+
+        <form class="panel report-filter" method="get" th:action="@{/admin/report}">
+            <input type="hidden" name="group" th:value="${group}">
+            <input type="hidden" name="sort" th:value="${sort}">
+            <input type="hidden" name="dir" th:value="${dir}">
+            <div class="report-filter-grid">
+                <label class="field">С даты
+                    <input type="date" name="from" th:value="${view.fromParam()}">
+                </label>
+                <label class="field">По дату
+                    <input type="date" name="to" th:value="${view.toParam()}">
+                </label>
+                <label class="field">Категория
+                    <select name="category">
+                        <option value="">Все категории</option>
+                        <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"
+                                th:selected="${view.categoryId() == category.id}"></option>
+                    </select>
+                </label>
+                <label class="field">Топ товаров
+                    <select name="top">
+                        <option th:each="option : ${topOptions}" th:value="${option}" th:text="${option} + ' позиций'"
+                                th:selected="${view.top() == option}"></option>
+                    </select>
+                </label>
+            </div>
+            <fieldset class="report-statuses">
+                <legend>Статусы заказов</legend>
+                <label class="field check" th:each="status : ${allStatuses}">
+                    <input type="checkbox" name="status" th:value="${status.name()}"
+                           th:checked="${view.statuses().contains(status)}">
+                    <span th:text="${status.title}">Новый</span>
+                </label>
+            </fieldset>
+            <div class="row-actions report-filter-actions">
+                <a class="btn ghost sm" th:href="@{/admin/report(group=${group}, sort=${sort}, dir=${dir})}">Сбросить</a>
+                <button class="btn brand sm" type="submit">Показать</button>
+            </div>
+        </form>
+
         <section class="kpis">
-            <article class="kpi" data-reveal><span>Клиенты</span><strong data-count th:text="${report.customerCount}">0</strong></article>
-            <article class="kpi" data-reveal><span>Товары</span><strong data-count th:text="${report.productCount}">0</strong></article>
+            <article class="kpi" data-reveal><span>Покупатели</span><strong data-count th:text="${report.buyerCount}">0</strong></article>
             <article class="kpi" data-reveal><span>Заказы</span><strong data-count th:text="${report.orderCount}">0</strong></article>
             <article class="kpi" data-reveal><span>Отменено</span><strong data-count th:text="${report.cancelledCount}">0</strong></article>
+            <article class="kpi" data-reveal><span>Продано, шт.</span><strong data-count th:text="${report.itemsSold}">0</strong></article>
             <article class="kpi accent" data-reveal><span>Выручка</span><strong data-count th:text="${@ui.rub(report.revenue)}">0</strong></article>
             <article class="kpi" data-reveal><span>Средний чек</span><strong data-count th:text="${@ui.rub(report.averageCheck)}">0</strong></article>
         </section>
+        <p class="muted tiny">Выручка — заказы выбранных статусов, кроме отменённых. Средний чек — выручка, делённая на число таких заказов.
+            Всего в магазине: <span th:text="${report.customerCount}">0</span> клиентов, <span th:text="${report.productCount}">0</span> товаров.</p>
+
         <section>
             <div class="section-head">
                 <div>
@@ -33,21 +81,21 @@
                 </div>
             </div>
             <nav class="filters" aria-label="Разрез выручки">
-                <a th:href="@{/admin/report(group='day', sort='label', dir='asc')}"
+                <a th:href="@{${links.page('day', 'label', 'asc')}}"
                    th:classappend="${group == 'day'} ? 'is-active'">По дням</a>
-                <a th:href="@{/admin/report(group='model', sort='amount', dir='desc')}"
+                <a th:href="@{${links.page('model', 'amount', 'desc')}}"
                    th:classappend="${group == 'model'} ? 'is-active'">По моделям</a>
-                <a th:href="@{/admin/report(group='category', sort='amount', dir='desc')}"
+                <a th:href="@{${links.page('category', 'amount', 'desc')}}"
                    th:classappend="${group == 'category'} ? 'is-active'">По категориям</a>
             </nav>
-            <p th:if="${#lists.isEmpty(report.breakdown)}" class="muted">Пока нет продаж — оформите заказ, чтобы появилась статистика.</p>
+            <p th:if="${#lists.isEmpty(report.breakdown)}" class="muted">За выбранный период продаж нет — попробуйте расширить фильтр.</p>
             <div class="table-wrap" th:if="${!#lists.isEmpty(report.breakdown)}">
                 <table class="report-sort">
                     <thead>
                     <tr>
                         <th>
                             <a th:with="next=${sort == 'label' and dir == 'asc' ? 'desc' : 'asc'}"
-                               th:href="@{/admin/report(group=${group}, sort='label', dir=${next})}"
+                               th:href="@{${links.page(group, 'label', next)}}"
                                th:classappend="${sort == 'label'} ? 'is-sorted'">
                                 <span th:text="${groupColumn}">День</span>
                                 <span th:if="${sort == 'label'}" th:text="${dir == 'asc'} ? '↑' : '↓'">↑</span>
@@ -55,7 +103,7 @@
                         </th>
                         <th>
                             <a th:with="next=${sort == 'orders' and dir == 'desc' ? 'asc' : 'desc'}"
-                               th:href="@{/admin/report(group=${group}, sort='orders', dir=${next})}"
+                               th:href="@{${links.page(group, 'orders', next)}}"
                                th:classappend="${sort == 'orders'} ? 'is-sorted'">
                                 <span>Заказы</span>
                                 <span th:if="${sort == 'orders'}" th:text="${dir == 'asc'} ? '↑' : '↓'">↓</span>
@@ -63,7 +111,7 @@
                         </th>
                         <th>
                             <a th:with="next=${sort == 'quantity' and dir == 'desc' ? 'asc' : 'desc'}"
-                               th:href="@{/admin/report(group=${group}, sort='quantity', dir=${next})}"
+                               th:href="@{${links.page(group, 'quantity', next)}}"
                                th:classappend="${sort == 'quantity'} ? 'is-sorted'">
                                 <span>Продано, шт.</span>
                                 <span th:if="${sort == 'quantity'}" th:text="${dir == 'asc'} ? '↑' : '↓'">↓</span>
@@ -71,7 +119,7 @@
                         </th>
                         <th>
                             <a th:with="next=${sort == 'amount' and dir == 'desc' ? 'asc' : 'desc'}"
-                               th:href="@{/admin/report(group=${group}, sort='amount', dir=${next})}"
+                               th:href="@{${links.page(group, 'amount', next)}}"
                                th:classappend="${sort == 'amount'} ? 'is-sorted'">
                                 <span>Выручка</span>
                                 <span th:if="${sort == 'amount'}" th:text="${dir == 'asc'} ? '↑' : '↓'">↓</span>
@@ -114,8 +162,8 @@
                 </tbody>
             </table>
         </div>
-        <h2 style="margin-top: 24px;">Топ товаров</h2>
-        <p th:if="${#lists.isEmpty(report.topProducts)}" class="muted">Пока нет продаж — оформите заказ, чтобы появилась статистика.</p>
+        <h2 style="margin-top: 24px;" th:text="'Топ-' + ${view.top()} + ' товаров'">Топ товаров</h2>
+        <p th:if="${#lists.isEmpty(report.topProducts)}" class="muted">За выбранный период продаж нет.</p>
         <div class="table-wrap" th:if="${!#lists.isEmpty(report.topProducts)}">
             <table>
                 <thead>

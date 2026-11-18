@@ -75,7 +75,6 @@
                 <a class="btn soft" href="/">Вернуться в магазин</a>
             </div>
         </article>
-        <iframe class="receipt-download" title="Загрузка чека" th:src="@{/orders/{id}/receipt.pdf(id=${order.id})}"></iframe>
     </div>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>

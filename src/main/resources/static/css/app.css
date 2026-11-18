@@ -838,7 +838,6 @@ td.actions form { margin: 0; }
 .receipt-head { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 16px; }
 .stamp { width: 120px; height: 120px; flex: none; transform: rotate(-12deg); animation: stamp .7s var(--spring) both .3s; }
 @keyframes stamp { from { opacity: 0; transform: rotate(-12deg) scale(2.2); } }
-.receipt-download { width: 0; height: 0; border: 0; position: absolute; }
 .success-banner { display: flex; gap: 16px; align-items: center; padding: 18px 20px; border-radius: var(--radius); background: var(--ok-soft); color: var(--ok); margin-bottom: 18px; font-weight: 700; }
 .success-banner svg { width: 40px; height: 40px; flex: none; }
 .success-banner .check-path { stroke-dasharray: 30; stroke-dashoffset: 30; animation: draw .6s var(--ease) forwards .3s; }
@@ -1023,4 +1022,20 @@ dialog[open]::backdrop { animation: fade .3s; }
     .site-header, .ticker, .footer, .tabbar, .toasts, .to-top, .back, .btn { display: none !important; }
     body { background: #fff; color: #000; }
     .receipt { box-shadow: none; border: 0; }
+}
+
+.report-filter { margin: 0 0 22px; padding: 22px; }
+.report-filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 16px; }
+.report-filter .field { margin-bottom: 12px; }
+.report-statuses { border: 0; padding: 0; margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.report-statuses legend { font-weight: 650; font-size: 14px; color: var(--ink-2); margin-bottom: 8px; padding: 0; }
+.report-statuses .field.check { margin: 0; font-weight: 600; }
+.report-filter-actions { margin-top: 16px; }
+.report-period { font-weight: 600; }
+@media (max-width: 900px) {
+    .report-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+    .report-filter { padding: 16px; }
+    .report-filter-grid { grid-template-columns: 1fr; }
 }

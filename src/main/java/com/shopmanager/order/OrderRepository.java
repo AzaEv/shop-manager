@@ -1,10 +1,12 @@
 package com.shopmanager.order;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.shopmanager.customer.Customer;
 
@@ -48,4 +50,15 @@ public interface OrderRepository extends JpaRepository<ShopOrder, Long> {
             where o.status <> com.shopmanager.order.OrderStatus.CANCELLED
             """)
     List<ShopOrder> findRevenueOrders();
+
+    @Query("""
+            select distinct o from ShopOrder o
+            join fetch o.customer
+            left join fetch o.items i
+            left join fetch i.product p
+            left join fetch p.category
+            where o.createdAt >= :start and o.createdAt < :end
+            order by o.createdAt desc
+            """)
+    List<ShopOrder> findForReport(@Param("start") Instant start, @Param("end") Instant end);
 }

@@ -127,13 +127,15 @@ final class OdsReport {
     private static void summary(StringBuilder xml, ShopAnalytics report, String created) {
         sheet(xml, "Сводка", "wide", "mid");
         title(xml, "Отчёт о продажах nova", 2);
-        note(xml, "Сформировано " + created + " (Ташкент). Выручка не включает отменённые заказы.", 2);
+        note(xml, report.period() + ". Сформировано " + created + " (Ташкент). Выручка не включает отменённые заказы.", 2);
         xml.append("<table:table-row><table:table-cell/><table:table-cell/></table:table-row>");
         header(xml, "Показатель", "Значение");
         textRow(xml, "Клиенты", integer(report.customerCount()));
+        textRow(xml, "Покупатели за период", integer(report.buyerCount()));
         textRow(xml, "Товары", integer(report.productCount()));
         textRow(xml, "Заказы", integer(report.orderCount()));
         textRow(xml, "Отменено", integer(report.cancelledCount()));
+        textRow(xml, "Продано, шт.", integer(report.itemsSold()));
         textRow(xml, "Выручка", money(report.revenue()));
         textRow(xml, "Средний чек", money(report.averageCheck()));
         xml.append("</table:table>");
@@ -159,7 +161,7 @@ final class OdsReport {
     private static void products(StringBuilder xml, ShopAnalytics report) {
         sheet(xml, "Товары", "wide", "narrow", "mid");
         title(xml, "Товары с наибольшей суммой", 3);
-        note(xml, "Десять позиций. В сумму входят и отменённые заказы.", 3);
+        note(xml, "До " + report.topProducts().size() + " позиций. Отменённые заказы не входят.", 3);
         xml.append("<table:table-row><table:table-cell table:number-columns-repeated=\"3\"/></table:table-row>");
         header(xml, "Товар", "Продано, шт.", "Сумма");
         for (ProductRow row : report.topProducts()) {
@@ -192,7 +194,7 @@ final class OdsReport {
 
     private static void orders(StringBuilder xml, List<ShopOrder> orders) {
         sheet(xml, "Заказы", "narrow", "mid", "mid", "wide", "wide", "narrow", "mid", "narrow", "narrow", "mid", "mid");
-        title(xml, "Все строки заказов", 11);
+        title(xml, "Строки заказов за период", 11);
         note(xml, "Каждая строка — позиция заказа. Сумма строки пригодна для сложения.", 11);
         xml.append("<table:table-row><table:table-cell table:number-columns-repeated=\"11\"/></table:table-row>");
         header(xml, "Чек", "Дата", "Покупатель", "Email", "Адрес", "Статус", "Товар", "Артикул",

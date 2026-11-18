@@ -3,9 +3,11 @@ package com.shopmanager.report;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Collator;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -14,11 +16,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.shopmanager.catalog.Category;
+import com.shopmanager.catalog.CategoryRepository;
 import com.shopmanager.catalog.Product;
 import com.shopmanager.catalog.ProductRepository;
 import com.shopmanager.customer.CustomerRepository;
@@ -31,75 +36,143 @@ import com.shopmanager.report.ReportDtos.ProductRow;
 import com.shopmanager.report.ReportDtos.ShopAnalytics;
 import com.shopmanager.report.ReportDtos.StatusRow;
 import com.shopmanager.report.ReportView.Group;
-import com.shopmanager.report.ReportView.Sort;
 
 @Service
 public class ReportService {
 
-    private static final ZoneId ZONE = ZoneId.of("Asia/Tashkent");
+    public static final ZoneId ZONE = ZoneId.of("Asia/Tashkent");
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    private static final Instant MIN = Instant.parse("1970-01-01T00:00:00Z");
+    private static final Instant MAX = Instant.parse("9999-01-01T00:00:00Z");
+    private static final int MAX_EMPTY_DAYS = 366;
 
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
 
     public ReportService(OrderRepository orderRepository, CustomerRepository customerRepository,
-            ProductRepository productRepository) {
+            ProductRepository productRepository, CategoryRepository categoryRepository) {
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
         this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     @Transactional(readOnly = true)
     public ShopAnalytics build(ReportView view) {
-        long customers = customerRepository.count();
-        long products = productRepository.count();
-        long orders = orderRepository.count();
-        long cancelled = orderRepository.countByStatus(OrderStatus.CANCELLED);
-        BigDecimal revenue = nvl(orderRepository.revenueExcludingCancelled());
+        return analyze(orders(view), view);
+    }
 
-        Map<OrderStatus, StatusRow> byStatus = new EnumMap<>(OrderStatus.class);
-        for (OrderStatus status : OrderStatus.values()) {
-            byStatus.put(status, new StatusRow(status, 0, BigDecimal.ZERO.setScale(2), 0));
-        }
-        for (Object[] row : orderRepository.totalsByStatus()) {
-            OrderStatus status = (OrderStatus) row[0];
-            long count = (Long) row[1];
-            BigDecimal amount = nvl((BigDecimal) row[2]);
-            int percent = percent(amount, revenue);
-            byStatus.put(status, new StatusRow(status, count, amount, percent));
-        }
-
-        List<StatusRow> statusRows = byStatus.values().stream()
-                .sorted(Comparator.comparing(StatusRow::status))
+    @Transactional(readOnly = true)
+    public List<ShopOrder> orders(ReportView view) {
+        Instant start = view.from() == null ? MIN : view.from().atStartOfDay(ZONE).toInstant();
+        Instant end = view.to() == null ? MAX : view.to().plusDays(1).atStartOfDay(ZONE).toInstant();
+        return orderRepository.findForReport(start, end).stream()
+                .filter(order -> view.statuses().contains(order.getStatus()))
+                .filter(order -> !lines(order, view).isEmpty() || view.categoryId() == null)
                 .toList();
+    }
 
-        List<ProductRow> top = new ArrayList<>();
-        for (Object[] row : orderRepository.topProducts()) {
-            top.add(new ProductRow((String) row[0], (Long) row[1], nvl((BigDecimal) row[2])));
-            if (top.size() == 10) {
-                break;
+    public String categoryName(Long categoryId) {
+        if (categoryId == null) {
+            return null;
+        }
+        return categoryRepository.findById(categoryId).map(Category::getName).orElse(null);
+    }
+
+    public String describe(ReportView view) {
+        StringBuilder text = new StringBuilder("Период ").append(view.periodTitle());
+        String category = categoryName(view.categoryId());
+        if (category != null) {
+            text.append(" · категория «").append(category).append('»');
+        }
+        if (!view.allStatuses()) {
+            text.append(" · статусы: ").append(String.join(", ",
+                    view.statuses().stream().map(OrderStatus::getTitle).toList()));
+        }
+        return text.toString();
+    }
+
+    private ShopAnalytics analyze(List<ShopOrder> orders, ReportView view) {
+        Map<OrderStatus, StatusAcc> byStatus = new EnumMap<>(OrderStatus.class);
+        for (OrderStatus status : view.statuses()) {
+            byStatus.put(status, new StatusAcc());
+        }
+        BigDecimal revenue = BigDecimal.ZERO;
+        long cancelled = 0;
+        long itemsSold = 0;
+        Set<Long> buyers = new HashSet<>();
+        List<ShopOrder> revenueOrders = new ArrayList<>();
+        Map<String, Bucket> products = new LinkedHashMap<>();
+
+        for (ShopOrder order : orders) {
+            BigDecimal amount = amount(order, view);
+            StatusAcc acc = byStatus.computeIfAbsent(order.getStatus(), key -> new StatusAcc());
+            acc.count++;
+            acc.amount = acc.amount.add(amount);
+            if (order.getStatus() == OrderStatus.CANCELLED) {
+                cancelled++;
+                continue;
+            }
+            revenue = revenue.add(amount);
+            revenueOrders.add(order);
+            buyers.add(order.getCustomer().getId());
+            for (OrderItem item : lines(order, view)) {
+                itemsSold += item.getQuantity();
+                Bucket bucket = products.computeIfAbsent(item.getProductName(), key -> bucket(key, key));
+                bucket.quantity += item.getQuantity();
+                bucket.amount = bucket.amount.add(line(item));
             }
         }
 
-        BigDecimal activeOrders = BigDecimal.valueOf(Math.max(0, orders - cancelled));
-        BigDecimal average = activeOrders.signum() == 0 || revenue.signum() == 0
-                ? BigDecimal.ZERO.setScale(2)
-                : revenue.divide(activeOrders, 2, RoundingMode.HALF_UP);
+        BigDecimal total = nvl(revenue);
+        List<StatusRow> statusRows = byStatus.entrySet().stream()
+                .map(entry -> new StatusRow(entry.getKey(), entry.getValue().count, nvl(entry.getValue().amount),
+                        percent(nvl(entry.getValue().amount), total)))
+                .sorted(Comparator.comparing(StatusRow::status))
+                .toList();
 
-        List<BreakdownRow> breakdown = breakdown(revenueOrders(), view, revenue);
-        return new ShopAnalytics(customers, products, orders, cancelled, revenue, average, statusRows, top, breakdown);
+        List<ProductRow> top = products.values().stream()
+                .sorted(Comparator.comparing((Bucket bucket) -> bucket.amount).reversed()
+                        .thenComparing(bucket -> bucket.sortKey, labelOrder()))
+                .limit(view.top())
+                .map(bucket -> new ProductRow(bucket.label, bucket.quantity, nvl(bucket.amount)))
+                .toList();
+
+        long active = revenueOrders.size();
+        BigDecimal average = active == 0 || total.signum() == 0
+                ? BigDecimal.ZERO.setScale(2)
+                : total.divide(BigDecimal.valueOf(active), 2, RoundingMode.HALF_UP);
+
+        return new ShopAnalytics(
+                customerRepository.count(),
+                productRepository.count(),
+                orders.size(),
+                cancelled,
+                total,
+                average,
+                statusRows,
+                top,
+                breakdown(revenueOrders, view, total),
+                buyers.size(),
+                itemsSold,
+                describe(view));
     }
 
     public byte[] toCsv(ReportView view) {
         ShopAnalytics report = build(view);
         StringBuilder csv = new StringBuilder();
-        csv.append('\uFEFF');
+        csv.append('﻿');
+        line(csv, "Отчёт", report.period());
+        csv.append('\n');
         csv.append("Показатель;Значение\n");
         line(csv, "Клиенты", Long.toString(report.customerCount()));
+        line(csv, "Покупатели за период", Long.toString(report.buyerCount()));
         line(csv, "Товары", Long.toString(report.productCount()));
         line(csv, "Заказы", Long.toString(report.orderCount()));
         line(csv, "Отменено", Long.toString(report.cancelledCount()));
+        line(csv, "Продано, шт.", Long.toString(report.itemsSold()));
         line(csv, "Выручка, руб.", money(report.revenue()));
         line(csv, "Средний чек, руб.", money(report.averageCheck()));
         csv.append('\n');
@@ -135,38 +208,39 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public byte[] toOds(ReportView view) {
-        return OdsReport.write(build(view), orderRepository.findAllByOrderByCreatedAtDesc(), view);
-    }
-
-    private List<ShopOrder> revenueOrders() {
-        Map<Long, ShopOrder> unique = new LinkedHashMap<>();
-        for (ShopOrder order : orderRepository.findRevenueOrders()) {
-            unique.putIfAbsent(order.getId(), order);
-        }
-        return List.copyOf(unique.values());
+        List<ShopOrder> orders = orders(view);
+        return OdsReport.write(analyze(orders, view), orders, view);
     }
 
     private List<BreakdownRow> breakdown(List<ShopOrder> orders, ReportView view, BigDecimal revenue) {
         Map<String, Bucket> buckets = new LinkedHashMap<>();
+        if (view.group() == Group.DAY && view.from() != null && view.to() != null
+                && ChronoUnit.DAYS.between(view.from(), view.to()) < MAX_EMPTY_DAYS) {
+            for (LocalDate day = view.from(); !day.isAfter(view.to()); day = day.plusDays(1)) {
+                LocalDate current = day;
+                buckets.put(day.toString(), bucket(DAY.format(current), current.toString()));
+            }
+        }
         for (ShopOrder order : orders) {
+            List<OrderItem> lines = lines(order, view);
             if (view.group() == Group.DAY) {
                 LocalDate day = LocalDate.ofInstant(order.getCreatedAt(), ZONE);
                 Bucket bucket = buckets.computeIfAbsent(day.toString(), key -> bucket(DAY.format(day), key));
                 bucket.orders++;
-                bucket.amount = bucket.amount.add(nvl(order.getTotal()));
-                for (OrderItem item : order.getItems()) {
+                bucket.amount = bucket.amount.add(amount(order, view));
+                for (OrderItem item : lines) {
                     bucket.quantity += item.getQuantity();
                 }
                 continue;
             }
-            for (OrderItem item : order.getItems()) {
+            for (OrderItem item : lines) {
                 String label = view.group() == Group.CATEGORY ? categoryName(item) : item.getProductName();
                 Bucket bucket = buckets.computeIfAbsent(label, key -> bucket(label, label));
                 if (bucket.orderIds.add(order.getId())) {
                     bucket.orders++;
                 }
                 bucket.quantity += item.getQuantity();
-                bucket.amount = bucket.amount.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+                bucket.amount = bucket.amount.add(line(item));
             }
         }
         Comparator<Bucket> comparator = switch (view.sort()) {
@@ -190,6 +264,31 @@ public class ReportService {
                 .toList();
     }
 
+    private static List<OrderItem> lines(ShopOrder order, ReportView view) {
+        if (view.categoryId() == null) {
+            return order.getItems();
+        }
+        return order.getItems().stream()
+                .filter(item -> item.getProduct() != null && item.getProduct().getCategory() != null
+                        && Objects.equals(item.getProduct().getCategory().getId(), view.categoryId()))
+                .toList();
+    }
+
+    private static BigDecimal amount(ShopOrder order, ReportView view) {
+        if (view.categoryId() == null) {
+            return nvl(order.getTotal());
+        }
+        BigDecimal sum = BigDecimal.ZERO;
+        for (OrderItem item : lines(order, view)) {
+            sum = sum.add(line(item));
+        }
+        return sum;
+    }
+
+    private static BigDecimal line(OrderItem item) {
+        return item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+    }
+
     private static Bucket bucket(String label, String sortKey) {
         Bucket bucket = new Bucket();
         bucket.label = label;
@@ -209,6 +308,11 @@ public class ReportService {
         Collator collator = Collator.getInstance(Locale.forLanguageTag("ru"));
         collator.setStrength(Collator.PRIMARY);
         return Comparator.nullsLast(collator);
+    }
+
+    private static final class StatusAcc {
+        private long count;
+        private BigDecimal amount = BigDecimal.ZERO;
     }
 
     private static final class Bucket {

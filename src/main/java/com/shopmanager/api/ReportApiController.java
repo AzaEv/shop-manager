@@ -1,5 +1,7 @@
 package com.shopmanager.api;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,7 +25,12 @@ public class ReportApiController {
     public ShopAnalytics report(
             @RequestParam(defaultValue = "day") String group,
             @RequestParam(defaultValue = "label") String sort,
-            @RequestParam(defaultValue = "asc") String dir) {
-        return reportService.build(ReportView.of(group, sort, dir));
+            @RequestParam(defaultValue = "asc") String dir,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(name = "status", required = false) List<String> statuses,
+            @RequestParam(name = "category", required = false) Long categoryId,
+            @RequestParam(required = false) Integer top) {
+        return reportService.build(ReportView.of(group, sort, dir, from, to, statuses, categoryId, top));
     }
 }

@@ -2,6 +2,8 @@ package com.shopmanager.admin;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -26,6 +28,7 @@ import com.shopmanager.customer.CustomerService;
 import com.shopmanager.customer.Role;
 import com.shopmanager.order.OrderService;
 import com.shopmanager.order.OrderStatus;
+import com.shopmanager.report.ReportLinks;
 import com.shopmanager.report.ReportService;
 import com.shopmanager.report.ReportView;
 
@@ -64,9 +67,19 @@ public class AdminWebController {
             @RequestParam(defaultValue = "day") String group,
             @RequestParam(defaultValue = "label") String sort,
             @RequestParam(defaultValue = "asc") String dir,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(name = "status", required = false) List<String> statuses,
+            @RequestParam(name = "category", required = false) Long categoryId,
+            @RequestParam(required = false) Integer top,
             Model model) {
-        ReportView view = ReportView.of(group, sort, dir);
+        ReportView view = ReportView.of(group, sort, dir, from, to, statuses, categoryId, top);
         model.addAttribute("report", reportService.build(view));
+        model.addAttribute("view", view);
+        model.addAttribute("links", new ReportLinks(view, LocalDate.now(ReportService.ZONE)));
+        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("allStatuses", OrderStatus.values());
+        model.addAttribute("topOptions", ReportView.TOP_OPTIONS);
         model.addAttribute("group", view.group().code());
         model.addAttribute("groupColumn", view.group().column());
         model.addAttribute("sort", view.sort().code());
@@ -79,8 +92,13 @@ public class AdminWebController {
     public ResponseEntity<byte[]> reportCsv(
             @RequestParam(defaultValue = "day") String group,
             @RequestParam(defaultValue = "label") String sort,
-            @RequestParam(defaultValue = "asc") String dir) {
-        byte[] body = reportService.toCsv(ReportView.of(group, sort, dir));
+            @RequestParam(defaultValue = "asc") String dir,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(name = "status", required = false) List<String> statuses,
+            @RequestParam(name = "category", required = false) Long categoryId,
+            @RequestParam(required = false) Integer top) {
+        byte[] body = reportService.toCsv(ReportView.of(group, sort, dir, from, to, statuses, categoryId, top));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
                         .filename("отчёт-продажи.csv", StandardCharsets.UTF_8)
@@ -94,8 +112,13 @@ public class AdminWebController {
     public ResponseEntity<byte[]> reportOds(
             @RequestParam(defaultValue = "day") String group,
             @RequestParam(defaultValue = "label") String sort,
-            @RequestParam(defaultValue = "asc") String dir) {
-        byte[] body = reportService.toOds(ReportView.of(group, sort, dir));
+            @RequestParam(defaultValue = "asc") String dir,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(name = "status", required = false) List<String> statuses,
+            @RequestParam(name = "category", required = false) Long categoryId,
+            @RequestParam(required = false) Integer top) {
+        byte[] body = reportService.toOds(ReportView.of(group, sort, dir, from, to, statuses, categoryId, top));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
                         .filename("отчёт-продажи.ods", StandardCharsets.UTF_8)

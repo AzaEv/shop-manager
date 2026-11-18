@@ -25,6 +25,9 @@ public class ReportDtos {
             BigDecimal averageCheck,
             List<StatusRow> byStatus,
             List<ProductRow> topProducts,
-            List<BreakdownRow> breakdown) {
+            List<BreakdownRow> breakdown,
+            long buyerCount,
+            long itemsSold,
+            String period) {
     }
 }

@@ -3,6 +3,8 @@ package com.shopmanager;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,6 +22,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 import java.util.zip.ZipInputStream;
 
@@ -366,7 +370,9 @@ class ShopScenarioTest {
         String receiptUrl = paid.getResponse().getRedirectedUrl();
         mockMvc.perform(get(receiptUrl).with(httpBasic("customer@shop.local", "customer123")))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Печать магазина")));
+                .andExpect(content().string(containsString("Печать магазина")))
+                .andExpect(content().string(containsString("Скачать чек PDF")))
+                .andExpect(content().string(not(containsString("<iframe"))));
 
         mockMvc.perform(get(receiptUrl + ".pdf").with(httpBasic("customer@shop.local", "customer123")))
                 .andExpect(status().isOk())
@@ -440,5 +446,88 @@ class ShopScenarioTest {
                         .with(httpBasic("admin@shop.local", "admin123")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.breakdown[0].label").value("Смартфоны"));
+    }
+
+    @Test
+    void t19ReportFiltersByPeriodStatusCategoryAndTop() throws Exception {
+        String email = "filter-" + UUID.randomUUID() + "@shop.local";
+        customerService.register(email, "Фильтр", "+7010", "secret12", Role.CUSTOMER);
+        var nova = productRepository.findBySku("PHN-X15").orElseThrow();
+        long buds = productRepository.findBySku("AUD-WB1").orElseThrow().getId();
+        long phones = nova.getCategory().getId();
+        String phonesName = categoryRepository.findById(phones).orElseThrow().getName();
+
+        mockMvc.perform(post("/api/cart/items")
+                        .with(httpBasic(email, "secret12"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productId\":" + nova.getId() + ",\"quantity\":1}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/cart/items")
+                        .with(httpBasic(email, "secret12"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productId\":" + buds + ",\"quantity\":2}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/orders")
+                        .with(httpBasic(email, "secret12"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"address\":\"Бухара, Ляби-хауз 3\"}"))
+                .andExpect(status().isCreated());
+
+        String today = LocalDate.now(ZoneId.of("Asia/Tashkent")).toString();
+
+        mockMvc.perform(get("/api/admin/report")
+                        .param("from", "2000-01-01")
+                        .param("to", "2000-01-31")
+                        .with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orderCount").value(0))
+                .andExpect(jsonPath("$.revenue").value(0))
+                .andExpect(jsonPath("$.breakdown", hasSize(31)))
+                .andExpect(jsonPath("$.period").value("Период с 01.01.2000 по 31.01.2000"));
+
+        mockMvc.perform(get("/api/admin/report")
+                        .param("from", today)
+                        .param("to", today)
+                        .param("group", "category")
+                        .param("category", Long.toString(phones))
+                        .with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orderCount", greaterThanOrEqualTo(1)))
+                .andExpect(jsonPath("$.breakdown", hasSize(1)))
+                .andExpect(jsonPath("$.breakdown[0].label").value(phonesName))
+                .andExpect(jsonPath("$.breakdown[0].percentOfRevenue").value(100));
+
+        mockMvc.perform(get("/api/admin/report")
+                        .param("status", "CANCELLED")
+                        .with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.revenue").value(0))
+                .andExpect(jsonPath("$.byStatus", hasSize(1)))
+                .andExpect(jsonPath("$.byStatus[0].status").value("CANCELLED"));
+
+        mockMvc.perform(get("/api/admin/report")
+                        .param("top", "5")
+                        .param("from", "не-дата")
+                        .with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.topProducts", hasSize(lessThanOrEqualTo(5))));
+
+        mockMvc.perform(get("/admin/report")
+                        .param("from", today)
+                        .param("to", today)
+                        .param("status", "NEW")
+                        .param("category", Long.toString(phones))
+                        .with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Показать")))
+                .andExpect(content().string(containsString("категория «" + phonesName + "»")))
+                .andExpect(content().string(containsString("status=NEW")));
+
+        mockMvc.perform(get("/admin/report.csv")
+                        .param("from", "2000-01-01")
+                        .param("to", "2000-01-02")
+                        .with(httpBasic("admin@shop.local", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Период с 01.01.2000 по 02.01.2000")));
     }
 }
