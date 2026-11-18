@@ -1,65 +1,77 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="page">
+<main class="page" id="main">
     <div class="container">
         <div th:replace="~{fragments/layout :: flash}"></div>
+        <ol class="flow" th:if="${!#lists.isEmpty(cart.items)}">
+            <li class="now"><span>Корзина</span></li>
+            <li><span>Доставка</span></li>
+            <li><span>Оплата</span></li>
+            <li><span>Готово</span></li>
+        </ol>
         <div class="section-head">
             <div>
                 <p class="kicker">Ваши покупки</p>
                 <h1>Корзина</h1>
-                <p class="muted" th:if="${!#lists.isEmpty(cart.items)}" th:text="'Позиций: ' + ${#lists.size(cart.items)}"></p>
+                <p class="muted" th:if="${!#lists.isEmpty(cart.items)}" data-cart-positions
+                   th:text="'Позиций: ' + ${#lists.size(cart.items)}"></p>
             </div>
         </div>
-        <div class="cart-layout" th:if="${!#lists.isEmpty(cart.items)}">
+        <div class="cart-layout" th:if="${!#lists.isEmpty(cart.items)}" data-cart>
             <div class="cart-list">
-                <article class="cart-row" th:each="item, iter : ${cart.items}" th:style="'--i:' + ${iter.index}">
-                    <a class="art sm" th:classappend="${'tone-' + @ui.tone(item.product.category.slug)}"
-                       th:href="@{/products/{id}(id=${item.product.id})}">
-                        <img th:if="${@ui.photo(item.product.sku) != null}" th:src="@{${@ui.photo(item.product.sku)}}" th:alt="${item.product.name}">
+                <article class="cart-row" data-reveal th:each="item, iter : ${cart.items}" th:style="'--i:' + ${iter.index}"
+                         th:attr="data-cart-row=${item.product.id}, data-unit=${item.product.price}">
+                    <a class="art" th:href="@{/products/{id}(id=${item.product.id})}">
+                        <img th:if="${@ui.photo(item.product.sku) != null}" th:src="@{${@ui.photo(item.product.sku)}}" th:alt="${item.product.name}" loading="lazy">
                         <span th:if="${@ui.photo(item.product.sku) == null}" th:text="${@ui.emoji(item.product.category.slug)}">🛍️</span>
                     </a>
                     <div>
+                        <p class="pcard-cat" th:text="${item.product.category.name}"></p>
                         <h2><a th:href="@{/products/{id}(id=${item.product.id})}" th:text="${item.product.name}">Товар</a></h2>
-                        <p class="muted" th:text="${item.product.category.name}"></p>
-                        <p th:text="${@ui.rub(item.product.price)}"></p>
+                        <p class="muted" th:text="${@ui.rub(item.product.price)} + ' за шт.'"></p>
                     </div>
                     <div>
-                        <p class="line-total" th:text="${@ui.rub(@ui.line(item.product.price, item.quantity))}"></p>
+                        <p class="line-total" data-line-total th:text="${@ui.rub(@ui.line(item.product.price, item.quantity))}"></p>
                         <div class="row-actions">
-                            <form th:action="@{/cart/items/{id}(id=${item.product.id})}" method="post">
-                                <div class="stepper" data-stepper data-autosubmit="true">
+                            <form th:action="@{/cart/items/{id}(id=${item.product.id})}" method="post" data-qty-form>
+                                <div class="stepper sm" data-stepper data-autosubmit="true">
                                     <button type="button" data-step="-1" aria-label="Меньше">−</button>
                                     <input type="number" name="quantity" min="0" th:max="${item.product.stock}" th:value="${item.quantity}" aria-label="Количество">
                                     <button type="button" data-step="1" aria-label="Больше">+</button>
                                 </div>
                             </form>
-                            <form th:action="@{/cart/items/{id}/delete(id=${item.product.id})}" method="post">
-                                <button type="submit" class="btn ghost sm cart-remove" onclick="return confirm('Убрать товар из корзины?')">Убрать</button>
+                            <form th:action="@{/cart/items/{id}/delete(id=${item.product.id})}" method="post" data-remove-form>
+                                <button type="submit" class="icon-btn" aria-label="Убрать" title="Убрать"><svg th:replace="~{fragments/icons :: trash}"></svg></button>
                             </form>
                         </div>
                     </div>
                 </article>
             </div>
             <aside class="summary">
-                <p class="kicker">К оплате</p>
+                <h2>Итого</h2>
+                <div class="free-ship"><svg th:replace="~{fragments/icons :: truck}"></svg>Доставка бесплатная — без минимальной суммы</div>
                 <ul class="mini-lines">
-                    <li><span>Товары</span><strong th:text="${@ui.rub(total)}">0 ₽</strong></li>
+                    <li><span>Товары, шт.</span><strong data-cart-units th:text="${cartCount}">0</strong></li>
+                    <li><span>Товары</span><strong data-cart-sum th:text="${@ui.rub(total)}">0 ₽</strong></li>
                     <li><span>Доставка</span><strong>Бесплатно</strong></li>
                 </ul>
-                <p class="total" th:text="${@ui.rub(total)}">0 ₽</p>
-                <p class="month" th:text="'или от ' + ${@ui.monthly(total)} + ' / мес'"></p>
-                <a class="btn full" href="/checkout">Оформить заказ</a>
-                <p style="margin-top: 14px;"><a class="back" href="/">Продолжить покупки</a></p>
+                <div class="total-row">
+                    <span class="muted">К оплате</span>
+                    <p class="total" data-cart-total th:text="${@ui.rub(total)}">0 ₽</p>
+                </div>
+                <p class="month" data-cart-month th:text="'или от ' + ${@ui.monthly(total)} + ' / мес'"></p>
+                <a class="btn brand full" href="/checkout">Оформить заказ <svg th:replace="~{fragments/icons :: arrowRight}"></svg></a>
+                <a class="continue" href="/">Продолжить покупки</a>
             </aside>
         </div>
-        <div class="empty" th:if="${#lists.isEmpty(cart.items)}">
-            <div class="big">🛒</div>
+        <div class="empty" data-cart-empty th:hidden="${!#lists.isEmpty(cart.items)}">
+            <svg th:replace="~{fragments/art :: emptyCart}"></svg>
             <h2>Корзина пустая</h2>
             <p class="muted">Добавьте товар из каталога — он появится здесь.</p>
-            <a class="btn" href="/">В каталог</a>
+            <a class="btn brand" href="/">В каталог</a>
         </div>
     </div>
 </main>

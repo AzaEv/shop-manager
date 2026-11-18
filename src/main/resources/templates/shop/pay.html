@@ -1,47 +1,78 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="page">
-    <div class="container narrow">
+<main class="page" id="main">
+    <div class="container">
         <div th:replace="~{fragments/layout :: flash}"></div>
-        <p><a class="back" th:href="@{/orders/{id}(id=${order.id})}">← К заказу</a></p>
+        <a class="back" th:href="@{/orders/{id}(id=${order.id})}"><svg th:replace="~{fragments/icons :: arrowLeft}"></svg>К заказу</a>
+        <ol class="flow">
+            <li class="done"><span>Корзина</span></li>
+            <li class="done"><span>Доставка</span></li>
+            <li class="now"><span>Оплата</span></li>
+            <li><span>Готово</span></li>
+        </ol>
         <div class="pay-layout">
-            <section class="panel">
+            <section class="panel" data-reveal>
                 <p class="kicker">Учебная оплата</p>
                 <h1 th:text="'Заказ № ' + ${order.id}">Заказ</h1>
                 <p class="muted">Деньги не списываются. Номер карты нигде не сохраняется — это симуляция покупки.</p>
-                <form class="pay-sim" th:action="@{/orders/{id}/pay(id=${order.id})}" method="post">
+
+                <div class="card3d" data-card3d aria-hidden="true">
+                    <div class="card3d-inner">
+                        <div class="card-face">
+                            <div class="card-top"><span class="chip-ico"></span><span class="card-brand" data-card-brand>nova pay</span></div>
+                            <div class="card-number" data-card-number>4242 4242 4242 4242</div>
+                            <div class="card-meta">
+                                <div>Держатель<b data-card-holder th:text="${order.customer.name}">ИМЯ</b></div>
+                                <div>Срок<b data-card-exp>12/28</b></div>
+                            </div>
+                        </div>
+                        <div class="card-face back">
+                            <div class="card-strip"></div>
+                            <div class="card-cvc" data-card-cvc>123</div>
+                        </div>
+                    </div>
+                </div>
+
+                <form class="pay-sim" th:action="@{/orders/{id}/pay(id=${order.id})}" method="post" data-pay-form novalidate>
                     <label class="field">Имя на карте
-                        <input type="text" name="holder" required maxlength="80" autocomplete="off"
+                        <input type="text" name="holder" required maxlength="80" autocomplete="off" data-pay="holder"
                                th:value="${order.customer.name}">
                     </label>
                     <label class="field">Номер карты
-                        <input type="text" name="card" required inputmode="numeric" autocomplete="off"
+                        <input type="text" name="card" required inputmode="numeric" autocomplete="off" data-pay="card"
                                maxlength="23" value="4242 4242 4242 4242">
+                        <span class="field-hint" data-hint="card"></span>
                     </label>
                     <div class="grid-2">
                         <label class="field">Срок
-                            <input type="text" name="expiry" required maxlength="5" autocomplete="off" value="12/28" placeholder="ММ/ГГ">
+                            <input type="text" name="expiry" required maxlength="5" autocomplete="off" value="12/28" placeholder="ММ/ГГ" inputmode="numeric" data-pay="exp">
+                            <span class="field-hint" data-hint="exp"></span>
                         </label>
                         <label class="field">Код
-                            <input type="text" name="cvc" required maxlength="3" autocomplete="off" value="123">
+                            <input type="text" name="cvc" required maxlength="3" autocomplete="off" value="123" inputmode="numeric" data-pay="cvc">
+                            <span class="field-hint" data-hint="cvc"></span>
                         </label>
                     </div>
-                    <button class="btn full" type="submit">Оплатить</button>
+                    <button class="btn brand full" type="submit" th:text="'Оплатить ' + ${@ui.rub(order.total)}">Оплатить</button>
+                    <p class="secure-note"><svg th:replace="~{fragments/icons :: lock}"></svg>Данные карты не уходят дальше этой страницы</p>
                 </form>
             </section>
-            <aside class="summary">
-                <p class="kicker">К оплате</p>
+            <aside class="summary" data-reveal style="--i:1">
+                <h2>К оплате</h2>
                 <ul class="mini-lines">
                     <li th:each="item : ${order.items}">
                         <span th:text="${item.productName} + ' × ' + ${item.quantity}"></span>
                         <span th:text="${@ui.rub(@ui.line(item.unitPrice, item.quantity))}"></span>
                     </li>
                 </ul>
-                <p class="total" th:text="${@ui.rub(order.total)}">0 ₽</p>
-                <p class="month" th:text="${order.address}"></p>
+                <div class="total-row">
+                    <span class="muted">Итого</span>
+                    <p class="total" th:text="${@ui.rub(order.total)}">0 ₽</p>
+                </div>
+                <p class="month" th:text="'Доставка: ' + ${order.address}"></p>
             </aside>
         </div>
     </div>

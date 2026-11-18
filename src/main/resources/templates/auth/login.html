@@ -1,38 +1,49 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="page">
+<main class="page" id="main">
     <div class="container auth-grid">
-        <aside class="auth-aside">
+        <aside class="auth-aside" data-reveal>
             <p class="kicker">nova</p>
             <h1>С возвращением</h1>
             <p>Корзина, заказы и адрес доставки ждут в профиле.</p>
-            <span class="blob a"></span>
-            <span class="blob b"></span>
+            <svg th:replace="~{fragments/art :: auth}"></svg>
         </aside>
-        <form class="panel" th:action="@{/login}" method="post">
+        <form class="panel auth-form" th:action="@{/login}" method="post" data-reveal style="--i:1" data-login-form>
             <h2>Вход</h2>
+            <p class="muted">Введите email и пароль от аккаунта.</p>
             <p class="flash err" th:if="${param.error}">Неверный email или пароль</p>
             <p class="flash ok" th:if="${param.logout}">Вы вышли из аккаунта</p>
             <label class="field">Email
-                <input type="email" name="username" required autocomplete="username">
+                <input type="email" name="username" required autocomplete="username" placeholder="you@example.com" autofocus>
             </label>
             <label class="field">Пароль
-                <input type="password" name="password" required autocomplete="current-password">
+                <span class="pw">
+                    <input type="password" name="password" required autocomplete="current-password">
+                    <button type="button" data-pw-toggle aria-label="Показать пароль"><svg th:replace="~{fragments/icons :: eye}"></svg></button>
+                </span>
             </label>
-            <button class="btn full" type="submit">Войти</button>
-            <p style="margin-top: 14px;">Нет аккаунта? <a href="/register"><strong>Регистрация</strong></a></p>
-            <details class="demo">
+            <button class="btn brand full" type="submit">Войти</button>
+            <p class="switch-link">Нет аккаунта? <a href="/register">Регистрация</a></p>
+            <details class="demo" open>
                 <summary>Тестовые аккаунты</summary>
-                <table>
-                    <tr><td>Покупатель</td><td>customer@shop.local</td><td>customer123</td></tr>
-                    <tr><td>Менеджер</td><td>manager@shop.local</td><td>manager123</td></tr>
-                    <tr><td>Кладовщик</td><td>warehouse@shop.local</td><td>warehouse123</td></tr>
-                    <tr><td>Администратор</td><td>admin@shop.local</td><td>admin123</td></tr>
-                </table>
-                <p class="muted tiny">Ещё покупатели, пароль customer123: anna, dmitry, elena, oleg, marina, sergey и kate — все @shop.local.</p>
+                <div class="demo-list">
+                    <button type="button" data-demo="customer@shop.local" data-demo-pass="customer123">
+                        <span class="avatar">П</span><span><b>Покупатель</b><small>customer@shop.local</small></span><span class="go">Войти →</span>
+                    </button>
+                    <button type="button" data-demo="manager@shop.local" data-demo-pass="manager123">
+                        <span class="avatar">М</span><span><b>Менеджер</b><small>manager@shop.local</small></span><span class="go">Войти →</span>
+                    </button>
+                    <button type="button" data-demo="warehouse@shop.local" data-demo-pass="warehouse123">
+                        <span class="avatar">К</span><span><b>Кладовщик</b><small>warehouse@shop.local</small></span><span class="go">Войти →</span>
+                    </button>
+                    <button type="button" data-demo="admin@shop.local" data-demo-pass="admin123">
+                        <span class="avatar">А</span><span><b>Администратор</b><small>admin@shop.local</small></span><span class="go">Войти →</span>
+                    </button>
+                </div>
+                <p class="muted tiny">Пароли: customer123, manager123, warehouse123, admin123. Ещё покупатели с паролем customer123: anna, dmitry, elena, oleg, marina, sergey и kate — все @shop.local.</p>
             </details>
         </form>
     </div>

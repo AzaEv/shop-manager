@@ -1,40 +1,54 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="page">
+<main class="page" id="main">
     <div class="container">
         <div th:replace="~{fragments/layout :: flash}"></div>
-        <p><a class="back" href="/cart">← Корзина</a></p>
+        <a class="back" href="/cart"><svg class="icon" th:replace="~{fragments/icons :: arrowLeft}"></svg>Корзина</a>
+        <ol class="flow">
+            <li class="done"><span>Корзина</span></li>
+            <li class="now"><span>Доставка</span></li>
+            <li><span>Оплата</span></li>
+            <li><span>Готово</span></li>
+        </ol>
         <div class="section-head"><h1>Оформление</h1></div>
         <div class="empty" th:if="${#lists.isEmpty(cart.items)}">
-            <div class="big">🛒</div>
+            <svg th:replace="~{fragments/art :: emptyCart}"></svg>
             <h2>Сначала добавьте товары</h2>
-            <a class="btn" href="/">В каталог</a>
+            <a class="btn brand" href="/">В каталог</a>
         </div>
         <div class="split" th:if="${!#lists.isEmpty(cart.items)}">
-            <form class="panel" th:action="@{/checkout}" method="post">
+            <form class="panel" th:action="@{/checkout}" method="post" data-reveal>
                 <h2>Куда везти</h2>
+                <p class="muted">Укажите город, улицу, дом и квартиру. Курьер позвонит по номеру из профиля.</p>
                 <label class="field">Адрес доставки
-                    <textarea name="address" required rows="4" maxlength="500" th:text="${account != null ? account.address : ''}"></textarea>
+                    <textarea name="address" required rows="4" maxlength="500" data-counter
+                              placeholder="Например: Душанбе, пр. Рудаки, 1, кв. 5"
+                              th:text="${account != null ? account.address : ''}"></textarea>
+                    <span class="field-hint" data-counter-out></span>
                 </label>
                 <label class="field check">
                     <input type="checkbox" name="saveAddress" value="true" checked>
                     Сохранить адрес в профиле
                 </label>
-                <button class="btn full" type="submit">Перейти к оплате</button>
+                <button class="btn brand full" type="submit">Перейти к оплате <svg th:replace="~{fragments/icons :: arrowRight}"></svg></button>
+                <p class="secure-note"><svg th:replace="~{fragments/icons :: lock}"></svg>Заказ резервирует товар на складе сразу после оформления</p>
             </form>
-            <aside class="summary">
+            <aside class="summary" data-reveal style="--i:1">
                 <h2>Ваш заказ</h2>
                 <ul class="mini-lines">
                     <li th:each="item : ${cart.items}">
                         <span th:text="${item.product.name} + ' × ' + ${item.quantity}"></span>
                         <span th:text="${@ui.rub(@ui.line(item.product.price, item.quantity))}"></span>
                     </li>
+                    <li><span>Доставка</span><span>Бесплатно</span></li>
                 </ul>
-                <p class="muted">К оплате</p>
-                <p class="total" th:text="${@ui.rub(total)}">0 ₽</p>
+                <div class="total-row">
+                    <span class="muted">К оплате</span>
+                    <p class="total" th:text="${@ui.rub(total)}">0 ₽</p>
+                </div>
             </aside>
         </div>
     </div>

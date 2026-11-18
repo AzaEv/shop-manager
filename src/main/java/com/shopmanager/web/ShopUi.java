@@ -26,17 +26,50 @@ public class ShopUi {
             "ACC-USBC", "ACC-PB1", "ACC-CS1",
             "HOM-MUG", "HOM-PLT");
 
-    public record Slide(String kicker, String title, String text, String slug, String tone) {
+    public record Slide(String kicker, String title, String accent, String text, String slug, String tone,
+            List<String> skus) {
+    }
+
+    public record Perk(String icon, String title, String text) {
     }
 
     public List<Slide> slides() {
         return List.of(
-                new Slide("Смартфоны", "Nova для каждого дня",
-                        "Компактные и Pro — экран, память и запас хода", "phones", "sun"),
-                new Slide("Аудио", "Музыка без проводов",
-                        "Наушники, колонки и микрофоны линейки Wave", "audio", "mint"),
-                new Slide("Дом и офис", "Мелочи, которые остаются",
-                        "Лампы, кружки, кресла и кабели на каждый день", "home", "lilac"));
+                new Slide("Смартфоны", "Nova для каждого дня", "каждого дня",
+                        "Компактные и Pro — экран, память и запас хода", "phones", "sun",
+                        List.of("PHN-X15P", "PHN-AIR", "PHN-MINI")),
+                new Slide("Аудио", "Музыка без проводов", "без проводов",
+                        "Наушники, колонки и микрофоны линейки Wave", "audio", "mint",
+                        List.of("AUD-WH1", "AUD-WB1", "AUD-WS1")),
+                new Slide("Дом и офис", "Мелочи, которые остаются", "остаются",
+                        "Лампы, кружки, кресла и кабели на каждый день", "home", "lilac",
+                        List.of("OFF-DL2", "HOM-PLT", "HOM-MUG")));
+    }
+
+    public List<Perk> perks() {
+        return List.of(
+                new Perk("truck", "Доставка бесплатно", "Привезём по адресу из профиля, без доплат за километры"),
+                new Perk("split", "12 платежей", "Та же цена, разделённая на 12 частей. Без кредита"),
+                new Perk("shield", "Честный остаток", "Товар списывается со склада в момент заказа — дважды не продадим"),
+                new Perk("receipt", "PDF-чек", "После оплаты чек можно скачать и распечатать"));
+    }
+
+    public String titleLead(Slide slide) {
+        if (slide == null || slide.accent() == null || !slide.title().endsWith(slide.accent())) {
+            return slide == null ? "" : slide.title();
+        }
+        return slide.title().substring(0, slide.title().length() - slide.accent().length()).stripTrailing();
+    }
+
+    public String excerpt(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.length() > 64 ? text.substring(0, 63).stripTrailing() + "…" : text;
+    }
+
+    public int stockPercent(int stock) {
+        return Math.max(4, Math.min(100, stock * 100 / 40));
     }
 
     public String categoryHref(List<Category> categories, String slug) {

@@ -3,83 +3,139 @@
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="page">
-        <section class="hero" data-hero th:if="${#strings.isEmpty(q) and selectedCategoryId == null}">
-            <div class="hero-viewport">
-                <article class="hero-slide" th:each="slide, stat : ${@ui.slides()}"
-                         th:classappend="${(stat.first ? 'is-active ' : '') + 'tone-' + slide.tone}">
-                    <div class="hero-copy">
-                        <p class="kicker" th:text="${slide.kicker}">Раздел</p>
-                        <h2 th:text="${slide.title}">Заголовок</h2>
-                        <p th:text="${slide.text}">Описание</p>
-                        <a class="btn" th:href="${@ui.categoryHref(categories, slide.slug)}">Подробнее</a>
+<main class="page" id="main" th:with="home=${#strings.isEmpty(q) and selectedCategoryId == null}">
+    <section class="hero container" data-hero th:if="${home}" aria-roledescription="carousel" aria-label="Подборки">
+        <div class="hero-shell">
+            <article class="hero-slide" th:each="slide, stat : ${@ui.slides()}"
+                     th:classappend="${stat.first ? 'is-active' : ''}" th:attr="aria-hidden=${!stat.first}" th:aria-label="${slide.title}">
+                <div class="hero-copy">
+                    <p class="kicker" th:text="${slide.kicker}">Раздел</p>
+                    <h2><span th:text="${@ui.titleLead(slide)}">Nova для</span> <em th:text="${slide.accent}">каждого дня</em></h2>
+                    <p th:text="${slide.text}">Описание</p>
+                    <div class="hero-cta">
+                        <a class="btn lime" th:href="${@ui.categoryHref(categories, slide.slug)}">Смотреть подборку
+                            <svg th:replace="~{fragments/icons :: arrowRight}"></svg></a>
+                        <a class="btn ghost" href="#catalog">Весь каталог</a>
                     </div>
-                    <div class="hero-art">
-                        <img th:src="@{${@ui.heroPhoto(slide.slug)}}" alt="">
+                </div>
+                <div class="hero-stage" data-parallax>
+                    <div class="hero-tile" th:each="sku, s : ${slide.skus}" th:classappend="${'t' + s.count}">
+                        <img th:src="@{${@ui.photo(sku)}}" alt="" th:attr="loading=${stat.first ? 'eager' : 'lazy'}">
                     </div>
-                </article>
+                    <div class="hero-chip"><i>✦</i>от 12 платежей без наценки</div>
+                </div>
+            </article>
+            <div class="hero-controls">
+                <button type="button" class="hero-nav" data-hero-prev aria-label="Предыдущий слайд"><svg th:replace="~{fragments/icons :: arrowLeft}"></svg></button>
+                <div class="hero-dots">
+                    <button type="button" th:each="slide, stat : ${@ui.slides()}"
+                            th:attr="data-hero-dot=${stat.index}"
+                            th:classappend="${stat.first} ? 'is-active'"
+                            th:aria-label="'Слайд ' + ${stat.count}"></button>
+                </div>
+                <button type="button" class="hero-nav" data-hero-next aria-label="Следующий слайд"><svg th:replace="~{fragments/icons :: arrowRight}"></svg></button>
             </div>
-            <button type="button" class="hero-nav prev" data-hero-prev aria-label="Предыдущий слайд">‹</button>
-            <button type="button" class="hero-nav next" data-hero-next aria-label="Следующий слайд">›</button>
-            <div class="hero-dots">
-                <button type="button" th:each="slide, stat : ${@ui.slides()}"
-                        th:attr="data-hero-dot=${stat.index}"
-                        th:classappend="${stat.first} ? 'is-active'"
-                        th:aria-label="'Слайд ' + ${stat.count}"></button>
-            </div>
-        </section>
+        </div>
+    </section>
 
     <div class="container">
-        <div th:replace="~{fragments/layout :: flash}"></div>
-        <nav class="rail" aria-label="Категории">
-            <a th:href="@{/(q=${q}, sort=${sort}, dir=${dir})}" th:classappend="${selectedCategoryId == null} ? 'is-active'">
-                <span class="bubble tone-default">✨</span>
-                <span>Все</span>
-            </a>
-            <a th:each="category : ${categories}"
-               th:href="@{/(categoryId=${category.id}, q=${q}, sort=${sort}, dir=${dir})}"
-               th:classappend="${selectedCategoryId == category.id} ? 'is-active'">
-                <span class="bubble" th:classappend="${(@ui.categoryPhoto(category.slug) != null ? 'has-photo ' : '') + 'tone-' + @ui.tone(category.slug)}">
-                    <img th:if="${@ui.categoryPhoto(category.slug) != null}"
-                         th:src="@{${@ui.categoryPhoto(category.slug)}}" alt="">
-                    <span th:if="${@ui.categoryPhoto(category.slug) == null}" th:text="${@ui.emoji(category.slug)}">🛍️</span>
+        <section class="perks" th:if="${home}">
+            <article class="perk" data-reveal th:each="perk, it : ${@ui.perks()}" th:style="'--i:' + ${it.index}">
+                <span class="perk-ico">
+                    <svg th:replace="~{fragments/icons :: __${perk.icon}__}"></svg>
                 </span>
-                <span th:text="${category.name}">Категория</span>
-            </a>
-        </nav>
-
-        <div class="section-head">
-            <div>
-                <h1 th:text="${selectedCategory != null ? selectedCategory.name : (#strings.isEmpty(q) ? 'Рекомендуем' : 'Поиск')}">Рекомендуем</h1>
-                <p class="muted" th:if="${!#strings.isEmpty(q)}" th:text="'Запрос: «' + ${q} + '»'"></p>
-                <p class="muted" th:text="${#lists.size(products)} + ' товаров'"></p>
-            </div>
-            <form class="sortbar" method="get" action="/">
-                <input type="hidden" name="q" th:value="${q}">
-                <input type="hidden" name="categoryId" th:if="${selectedCategoryId != null}" th:value="${selectedCategoryId}">
-                <select name="sort" aria-label="Сортировка" onchange="this.form.submit()">
-                    <option value="NAME" th:selected="${sort == 'NAME'}">По названию</option>
-                    <option value="PRICE" th:selected="${sort == 'PRICE'}">По цене</option>
-                    <option value="STOCK" th:selected="${sort == 'STOCK'}">По остатку</option>
-                </select>
-                <select name="dir" aria-label="Порядок" onchange="this.form.submit()">
-                    <option value="asc" th:selected="${dir == 'asc'}">Сначала меньшие</option>
-                    <option value="desc" th:selected="${dir == 'desc'}">Сначала большие</option>
-                </select>
-            </form>
-        </div>
-
-        <section class="grid" th:if="${!#lists.isEmpty(products)}">
-            <th:block th:each="product, stat : ${products}">
-                <article th:replace="~{fragments/product-card :: card(product=${product}, index=${stat.index})}"></article>
-            </th:block>
+                <div>
+                    <strong th:text="${perk.title}">Преимущество</strong>
+                    <p th:text="${perk.text}">Описание</p>
+                </div>
+            </article>
         </section>
-        <div class="empty" th:if="${#lists.isEmpty(products)}">
-            <div class="big">🔍</div>
-            <h2>Ничего не нашлось</h2>
-            <p class="muted">Смените запрос или откройте другую категорию.</p>
-            <a class="btn" href="/">Ко всему каталогу</a>
-        </div>
+
+        <section class="section" th:if="${home}">
+            <div class="section-head" data-reveal>
+                <div>
+                    <p class="kicker">Категории</p>
+                    <h2>Что ищем сегодня?</h2>
+                </div>
+            </div>
+            <div class="bento">
+                <a th:each="category, it : ${categories}" th:if="${it.index < 5}" data-reveal th:style="'--i:' + ${it.index}"
+                   th:classappend="${category.slug == 'phones'} ? 'big'" th:href="@{/(categoryId=${category.id})}">
+                    <img th:if="${@ui.categoryPhoto(category.slug) != null}" th:src="@{${@ui.categoryPhoto(category.slug)}}" alt="" loading="lazy">
+                    <span class="go"><svg th:replace="~{fragments/icons :: arrowUpRight}"></svg></span>
+                    <strong th:text="${category.name}">Категория</strong>
+                    <small>Открыть раздел</small>
+                </a>
+            </div>
+        </section>
+
+        <section class="section" id="catalog">
+            <div th:replace="~{fragments/layout :: flash}"></div>
+            <div class="section-head">
+                <div>
+                    <p class="kicker" th:text="${home ? 'Каталог' : (selectedCategory != null ? 'Категория' : 'Поиск')}">Каталог</p>
+                    <h1 th:text="${selectedCategory != null ? selectedCategory.name : (#strings.isEmpty(q) ? 'Рекомендуем' : 'Поиск')}">Рекомендуем</h1>
+                    <p class="muted" th:if="${!#strings.isEmpty(q)}" th:text="'Запрос: «' + ${q} + '»'"></p>
+                </div>
+            </div>
+
+            <div class="toolbar-sticky">
+                <nav class="chips" aria-label="Категории">
+                    <a class="chip" th:href="@{/(q=${q}, sort=${sort}, dir=${dir})} + '#catalog'" th:classappend="${selectedCategoryId == null} ? 'is-active'">
+                        <span class="dot">✦</span>Все
+                    </a>
+                    <a class="chip" th:each="category : ${categories}"
+                       th:href="@{/(categoryId=${category.id}, q=${q}, sort=${sort}, dir=${dir})} + '#catalog'"
+                       th:classappend="${selectedCategoryId == category.id} ? 'is-active'">
+                        <img th:if="${@ui.categoryPhoto(category.slug) != null}" th:src="@{${@ui.categoryPhoto(category.slug)}}" alt="" loading="lazy">
+                        <span class="dot" th:if="${@ui.categoryPhoto(category.slug) == null}" th:text="${@ui.emoji(category.slug)}">🛍️</span>
+                        <span th:text="${category.name}">Категория</span>
+                    </a>
+                </nav>
+                <span class="result-count" th:text="${#lists.size(products)} + ' товаров'">0 товаров</span>
+                <form class="sortbar" method="get" action="/" data-autosubmit>
+                    <input type="hidden" name="q" th:value="${q}">
+                    <input type="hidden" name="categoryId" th:if="${selectedCategoryId != null}" th:value="${selectedCategoryId}">
+                    <select class="select" name="sort" aria-label="Сортировка">
+                        <option value="NAME" th:selected="${sort == 'NAME'}">По названию</option>
+                        <option value="PRICE" th:selected="${sort == 'PRICE'}">По цене</option>
+                        <option value="STOCK" th:selected="${sort == 'STOCK'}">По остатку</option>
+                    </select>
+                    <select class="select" name="dir" aria-label="Порядок">
+                        <option value="asc" th:selected="${dir == 'asc'}">По возрастанию</option>
+                        <option value="desc" th:selected="${dir == 'desc'}">По убыванию</option>
+                    </select>
+                    <noscript><button class="btn sm" type="submit">Применить</button></noscript>
+                </form>
+                <div class="view-toggle" role="group" aria-label="Вид списка">
+                    <button type="button" class="is-active" data-view="grid" aria-label="Плиткой"><svg th:replace="~{fragments/icons :: grid}"></svg></button>
+                    <button type="button" data-view="list" aria-label="Списком"><svg th:replace="~{fragments/icons :: list}"></svg></button>
+                </div>
+            </div>
+
+            <div class="grid" data-grid th:if="${!#lists.isEmpty(products)}">
+                <th:block th:each="product, stat : ${products}">
+                    <article th:replace="~{fragments/product-card :: card(product=${product}, index=${stat.index})}"></article>
+                </th:block>
+            </div>
+            <div class="empty" th:if="${#lists.isEmpty(products)}">
+                <svg th:replace="~{fragments/art :: emptySearch}"></svg>
+                <h2>Ничего не нашлось</h2>
+                <p class="muted">Смените запрос или откройте другую категорию.</p>
+                <a class="btn" href="/">Ко всему каталогу</a>
+            </div>
+        </section>
+
+        <section class="section" data-recent hidden>
+            <div class="section-head">
+                <div>
+                    <p class="kicker">История</p>
+                    <h2>Вы недавно смотрели</h2>
+                </div>
+                <button type="button" class="btn ghost xs" data-recent-clear>Очистить</button>
+            </div>
+            <div class="recent" data-recent-list></div>
+        </section>
     </div>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>

@@ -1,25 +1,38 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="page">
+<main class="page" id="main">
     <div class="container narrow">
         <div th:replace="~{fragments/layout :: flash}"></div>
-        <div class="section-head"><h1>Мои заказы</h1></div>
-        <a class="order-card" th:each="order : ${orders}" th:href="@{/orders/{id}(id=${order.id})}">
+        <div class="section-head">
             <div>
-                <div class="order-no" th:text="'№ ' + ${order.id}"></div>
-                <p class="muted" th:text="${@ui.when(order.createdAt)}"></p>
+                <p class="kicker">Личный кабинет</p>
+                <h1>Мои заказы</h1>
+                <p class="muted" th:if="${!#lists.isEmpty(orders)}" th:text="'Всего: ' + ${#lists.size(orders)}"></p>
             </div>
-            <span class="status" th:classappend="${'status-' + order.status}" th:text="${order.status.title}"></span>
-            <strong th:text="${@ui.rub(order.total)}"></strong>
-        </a>
+        </div>
+        <div class="order-list">
+            <a class="order-card" data-reveal th:each="order, it : ${orders}" th:style="'--i:' + ${it.index}"
+               th:href="@{/orders/{id}(id=${order.id})}">
+                <span class="order-ico"><svg th:replace="~{fragments/icons :: package}"></svg></span>
+                <div>
+                    <div class="order-no" th:text="'Заказ № ' + ${order.id}"></div>
+                    <p class="muted" th:text="${@ui.when(order.createdAt)}"></p>
+                    <div class="mini-progress" th:if="${order.status.step > 0}" aria-hidden="true">
+                        <i th:each="k : ${#numbers.sequence(1, 5)}" th:classappend="${k <= order.status.step} ? 'on'"></i>
+                    </div>
+                </div>
+                <span class="status" th:classappend="${'status-' + order.status}" th:text="${order.status.title}"></span>
+                <strong th:text="${@ui.rub(order.total)}"></strong>
+            </a>
+        </div>
         <div class="empty" th:if="${#lists.isEmpty(orders)}">
-            <div class="big">📦</div>
+            <svg th:replace="~{fragments/art :: emptyOrders}"></svg>
             <h2>Заказов пока нет</h2>
             <p class="muted">Когда оформите покупку, она появится в этом списке.</p>
-            <a class="btn" href="/">В каталог</a>
+            <a class="btn brand" href="/">В каталог</a>
         </div>
     </div>
 </main>

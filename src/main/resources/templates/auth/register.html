@@ -1,34 +1,41 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="page">
+<main class="page" id="main">
     <div class="container auth-grid">
-        <aside class="auth-aside">
-            <p class="kicker">новый аккаунт</p>
+        <aside class="auth-aside" data-reveal>
+            <p class="kicker">Новый аккаунт</p>
             <h1>Покупайте как дома</h1>
             <p>После регистрации сразу откроется каталог. Имя, телефон и адрес можно поправить в профиле.</p>
-            <span class="blob a"></span>
-            <span class="blob b"></span>
+            <svg th:replace="~{fragments/art :: auth}"></svg>
         </aside>
-        <form class="panel" th:action="@{/register}" method="post">
+        <form class="panel auth-form" th:action="@{/register}" method="post" data-reveal style="--i:1">
             <div th:replace="~{fragments/layout :: flash}"></div>
             <h2>Регистрация</h2>
+            <p class="muted">Займёт меньше минуты.</p>
             <label class="field">Имя
-                <input type="text" name="name" required maxlength="180" autocomplete="name">
+                <input type="text" name="name" required maxlength="180" autocomplete="name" placeholder="Как к вам обращаться">
             </label>
-            <label class="field">Email
-                <input type="email" name="email" required autocomplete="email">
-            </label>
-            <label class="field">Телефон
-                <input type="tel" name="phone" maxlength="40" autocomplete="tel">
-            </label>
+            <div class="grid-2">
+                <label class="field">Email
+                    <input type="email" name="email" required autocomplete="email" placeholder="you@example.com">
+                </label>
+                <label class="field">Телефон
+                    <input type="tel" name="phone" maxlength="40" autocomplete="tel" placeholder="+992 …" data-phone>
+                </label>
+            </div>
             <label class="field">Пароль
-                <input type="password" name="password" required minlength="6" autocomplete="new-password">
+                <span class="pw">
+                    <input type="password" name="password" required minlength="6" autocomplete="new-password" data-strength-input placeholder="Не короче 6 символов">
+                    <button type="button" data-pw-toggle aria-label="Показать пароль"><svg th:replace="~{fragments/icons :: eye}"></svg></button>
+                </span>
+                <span class="strength" data-strength data-score="0" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                <span class="strength-label" data-strength-label></span>
             </label>
-            <button class="btn full" type="submit">Создать аккаунт</button>
-            <p style="margin-top: 14px;">Уже есть аккаунт? <a href="/login"><strong>Войти</strong></a></p>
+            <button class="btn brand full" type="submit">Создать аккаунт</button>
+            <p class="switch-link">Уже есть аккаунт? <a href="/login">Войти</a></p>
         </form>
     </div>
 </main>

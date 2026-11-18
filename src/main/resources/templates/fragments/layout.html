@@ -2,99 +2,122 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:fragment="head(pageTitle)">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#1a0b2e">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f3f8" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0e0c13" media="(prefers-color-scheme: dark)">
+    <meta name="description" content="nova — учебный интернет-магазин техники и мелочей для дома">
     <title th:text="${pageTitle} + ' · nova'">nova</title>
+    <script>
+        (function () {
+            var root = document.documentElement, theme = null;
+            root.classList.add("js");
+            try { theme = localStorage.getItem("nova-theme"); } catch (e) {}
+            if (theme !== "light" && theme !== "dark") {
+                theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            }
+            root.setAttribute("data-theme", theme);
+            var quiet = function (event) {
+                var t = event.viewTransition;
+                if (t) {
+                    [t.ready, t.finished, t.updateCallbackDone].forEach(function (p) {
+                        if (p) { p.catch(function () {}); }
+                    });
+                }
+            };
+            window.addEventListener("pagereveal", quiet);
+            window.addEventListener("pageswap", quiet);
+        })();
+    </script>
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="preload" th:href="@{/fonts/manrope-cyrillic.woff2}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" th:href="@{/css/app.css}">
     <script defer th:src="@{/js/app.js}"></script>
 </head>
 <body>
 <div th:fragment="header">
-    <div class="promo">
-        <a href="/">Новинки Nova. <span>Смотреть</span></a>
+    <span hidden data-session="customer" sec:authorize="hasRole('CUSTOMER')"></span>
+    <span hidden data-session="guest" sec:authorize="!isAuthenticated()"></span>
+    <span hidden data-session="staff" sec:authorize="isAuthenticated() and !hasRole('CUSTOMER')"></span>
+    <a class="sr-only" href="#main">К содержимому</a>
+    <div class="ticker" aria-hidden="true">
+        <div class="ticker-track">
+            <span>Доставка бесплатно</span><span>12 платежей без наценки</span><span>Новинки Nova X15 Pro</span>
+            <span>Звук линейки Wave</span><span>PDF-чек после оплаты</span><span>Оплата — учебная симуляция</span>
+            <span>Доставка бесплатно</span><span>12 платежей без наценки</span><span>Новинки Nova X15 Pro</span>
+            <span>Звук линейки Wave</span><span>PDF-чек после оплаты</span><span>Оплата — учебная симуляция</span>
+        </div>
     </div>
     <header class="site-header">
         <div class="container bar">
             <a class="logo" href="/" aria-label="nova, на главную">
-                <span class="logo-mark">n</span>
+                <span class="logo-mark"><svg th:replace="~{fragments/icons :: star}"></svg></span>
                 <span class="logo-word">nova</span>
             </a>
-            <button type="button" class="btn catalog-btn" data-catalog-toggle aria-expanded="false" aria-controls="catalogPanel">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
+            <button type="button" class="catalog-btn" data-catalog-toggle aria-expanded="false" aria-controls="catalogPanel">
+                <span class="burger" aria-hidden="true"><i></i><i></i><i></i></span>
                 <span>Каталог</span>
             </button>
-            <form class="search" method="get" action="/">
-                <input type="search" name="q" placeholder="Искать товары" aria-label="Поиск товаров" th:value="${q ?: ''}">
-                <button type="submit" aria-label="Найти">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2"/>
-                        <path d="M16 16l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </button>
+            <nav class="nav-links" aria-label="Быстрые разделы">
+                <a th:each="category, it : ${navCategories}" th:if="${it.index < 3}"
+                   th:href="@{/(categoryId=${category.id})}" th:text="${category.name}">Раздел</a>
+            </nav>
+            <form class="search" method="get" action="/" role="search" data-search>
+                <label class="search-field">
+                    <svg th:replace="~{fragments/icons :: search}"></svg>
+                    <input type="search" name="q" placeholder="Искать товары" aria-label="Поиск товаров"
+                           autocomplete="off" th:value="${q ?: ''}" data-search-input
+                           aria-autocomplete="list" aria-controls="suggest" aria-expanded="false">
+                    <kbd>/</kbd>
+                </label>
+                <div class="suggest" id="suggest" role="listbox" data-suggest></div>
             </form>
             <div class="header-actions">
-                <a class="icon-link" href="/orders" sec:authorize="hasRole('CUSTOMER')">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M6 7h12l-1 13H7L6 7z" stroke="currentColor" stroke-width="1.8"/>
-                        <path d="M9 7a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="1.8"/>
-                    </svg>
-                    <span class="icon-label">Заказы</span>
+                <button type="button" class="icon-btn theme-toggle hide-sm" data-theme-toggle aria-label="Сменить тему">
+                    <svg th:replace="~{fragments/icons :: moon}"></svg>
+                    <svg th:replace="~{fragments/icons :: sun}"></svg>
+                </button>
+                <button type="button" class="icon-btn hide-sm" data-fav-open aria-label="Избранное">
+                    <svg th:replace="~{fragments/icons :: heart}"></svg>
+                    <span class="badge" data-fav-count hidden>0</span>
+                </button>
+                <a class="icon-btn hide-sm" href="/orders" aria-label="Мои заказы" sec:authorize="hasRole('CUSTOMER')">
+                    <svg th:replace="~{fragments/icons :: bag}"></svg>
                 </a>
-                <a class="icon-link" href="/cart" data-cart-link sec:authorize="hasRole('CUSTOMER')">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M5 6h15l-1.5 9h-11z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                        <path d="M5 6L4 3H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <circle cx="9" cy="19" r="1.3" fill="currentColor"/>
-                        <circle cx="17" cy="19" r="1.3" fill="currentColor"/>
-                    </svg>
+                <a class="icon-btn" href="/cart" data-cart-link aria-label="Корзина" sec:authorize="hasRole('CUSTOMER')">
+                    <svg th:replace="~{fragments/icons :: cart}"></svg>
                     <span class="badge" th:if="${cartCount > 0}" th:text="${cartCount}">0</span>
-                    <span class="icon-label">Корзина</span>
                 </a>
-                <a class="icon-link" href="/admin" sec:authorize="hasAnyRole('ADMIN','MANAGER','WAREHOUSE')">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
-                        <rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
-                        <rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
-                        <rect x="13" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
-                    </svg>
-                    <span class="icon-label">Админка</span>
+                <a class="icon-btn hide-sm" href="/admin" aria-label="Админка" sec:authorize="hasAnyRole('ADMIN','MANAGER','WAREHOUSE')">
+                    <svg th:replace="~{fragments/icons :: admin}"></svg>
                 </a>
                 <div class="menu-wrap" th:if="${account != null}">
-                    <button type="button" class="icon-link" id="accountToggle" aria-expanded="false" aria-haspopup="true">
+                    <button type="button" class="icon-btn" id="accountToggle" aria-expanded="false" aria-haspopup="true" aria-label="Аккаунт">
                         <span class="avatar" th:text="${@ui.initial(account.name)}">N</span>
-                        <span class="icon-label" th:text="${account.name}">Имя</span>
                     </button>
                     <div class="menu" id="accountMenu">
+                        <div class="menu-head">
+                            <strong th:text="${account.name}">Имя</strong>
+                            <small th:text="${account.role.title}">Роль</small>
+                        </div>
                         <a href="/profile">Профиль</a>
                         <a href="/orders" sec:authorize="hasRole('CUSTOMER')">Мои заказы</a>
+                        <a href="/cart" sec:authorize="hasRole('CUSTOMER')">Корзина</a>
                         <a href="/admin/orders" sec:authorize="hasAnyRole('ADMIN','MANAGER')">Заказы магазина</a>
                         <a href="/admin/products" sec:authorize="hasAnyRole('ADMIN','WAREHOUSE')">Товары</a>
                         <a href="/admin/report" sec:authorize="hasAnyRole('ADMIN','MANAGER')">Отчёт</a>
+                        <button type="button" data-theme-toggle>Сменить тему</button>
                         <form th:action="@{/logout}" method="post">
                             <button type="submit">Выйти</button>
                         </form>
                     </div>
                 </div>
-                <a class="icon-link" href="/login" sec:authorize="!isAuthenticated()">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/>
-                        <path d="M5 19c1.4-3 3.8-4.5 7-4.5S17.6 16 19 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                    <span class="icon-label">Войти</span>
-                </a>
+                <a class="btn sm" href="/login" sec:authorize="!isAuthenticated()">Войти</a>
             </div>
         </div>
         <div class="catalog-panel" id="catalogPanel">
-            <div class="container cat-grid">
-                <a th:each="category : ${navCategories}" th:href="@{/(categoryId=${category.id})}">
-                    <span class="bubble sm" th:classappend="${(@ui.categoryPhoto(category.slug) != null ? 'has-photo ' : '') + 'tone-' + @ui.tone(category.slug)}">
-                        <img th:if="${@ui.categoryPhoto(category.slug) != null}"
-                             th:src="@{${@ui.categoryPhoto(category.slug)}}" alt="">
-                        <span th:if="${@ui.categoryPhoto(category.slug) == null}" th:text="${@ui.emoji(category.slug)}">🛍️</span>
-                    </span>
+            <div class="container mega">
+                <a th:each="category, it : ${navCategories}" th:href="@{/(categoryId=${category.id})}" th:style="'--i:' + ${it.index}">
+                    <img th:if="${@ui.categoryPhoto(category.slug) != null}" th:src="@{${@ui.categoryPhoto(category.slug)}}" alt="" loading="lazy">
                     <span th:text="${category.name}">Категория</span>
                 </a>
             </div>
@@ -108,7 +131,7 @@
     <p class="flash err" th:if="${error}" th:text="${error}" role="alert"></p>
 </div>
 
-<nav th:fragment="adminNav(active)" class="admin-nav">
+<nav th:fragment="adminNav(active)" class="admin-nav" aria-label="Разделы админки">
     <a href="/admin/report" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
        th:classappend="${active == 'report'} ? 'is-active'">Отчёт</a>
     <a href="/admin/orders" sec:authorize="hasAnyRole('ADMIN','MANAGER')"
@@ -119,38 +142,105 @@
        th:classappend="${active == 'customers'} ? 'is-active'">Клиенты</a>
 </nav>
 
-<footer th:fragment="footer" class="footer">
-    <div class="container footer-grid">
-        <div>
-            <a class="logo" href="/"><span class="logo-mark">n</span><span class="logo-word">nova</span></a>
-            <p class="muted">Магазин техники и мелочей для дома. Цена на карточке делится на 12 равных частей — это та же сумма, без кредита.</p>
+<th:block th:fragment="footer">
+<footer class="footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div>
+                <a class="logo" href="/"><span class="logo-mark"><svg th:replace="~{fragments/icons :: star}"></svg></span><span>nova</span></a>
+                <p class="muted">Магазин техники и мелочей для дома. Цена на карточке делится на 12 равных частей — это та же сумма, без кредита.</p>
+            </div>
+            <div>
+                <strong>Каталог</strong>
+                <a th:each="category : ${navCategories}" th:href="@{/(categoryId=${category.id})}" th:text="${category.name}">Категория</a>
+            </div>
+            <div>
+                <strong>Покупателям</strong>
+                <a href="/">Главная</a>
+                <a href="/cart" sec:authorize="hasRole('CUSTOMER')">Корзина</a>
+                <a href="/orders" sec:authorize="hasRole('CUSTOMER')">Заказы</a>
+                <a href="/login" sec:authorize="!isAuthenticated()">Войти</a>
+                <a href="/register" sec:authorize="!isAuthenticated()">Регистрация</a>
+            </div>
+            <div>
+                <strong>Аккаунт</strong>
+                <a href="/profile" sec:authorize="isAuthenticated()">Профиль</a>
+                <a href="/admin" sec:authorize="hasAnyRole('ADMIN','MANAGER','WAREHOUSE')">Админка</a>
+                <a href="#" data-fav-open>Избранное</a>
+                <a href="#" data-theme-toggle>Сменить тему</a>
+            </div>
         </div>
-        <div>
-            <strong>Покупателям</strong>
-            <a href="/">Каталог</a>
-            <a href="/cart" sec:authorize="hasRole('CUSTOMER')">Корзина</a>
-            <a href="/orders" sec:authorize="hasRole('CUSTOMER')">Заказы</a>
-            <a href="/login" sec:authorize="!isAuthenticated()">Войти</a>
-            <a href="/register" sec:authorize="!isAuthenticated()">Регистрация</a>
-        </div>
-        <div>
-            <strong>Аккаунт</strong>
-            <a href="/profile" sec:authorize="isAuthenticated()">Профиль</a>
-            <a href="/admin" sec:authorize="hasAnyRole('ADMIN','MANAGER','WAREHOUSE')">Админка</a>
+        <div class="wordmark" aria-hidden="true">nova</div>
+        <div class="footer-bottom">
+            <span>© 2026 nova · учебный проект</span>
+            <span>Оплата на сайте — симуляция, деньги не списываются</span>
         </div>
     </div>
 </footer>
 
+<div class="toasts" data-toasts aria-live="polite"></div>
+
+<button type="button" class="to-top" data-to-top aria-label="Наверх">
+    <svg class="ring" viewBox="0 0 50 50" aria-hidden="true"><circle cx="25" cy="25" r="23"/></svg>
+    <svg th:replace="~{fragments/icons :: chevronUp}"></svg>
+</button>
+
+<dialog class="qv" data-quick-view aria-label="Быстрый просмотр">
+    <button type="button" class="dialog-close" data-dialog-close aria-label="Закрыть"><svg th:replace="~{fragments/icons :: close}"></svg></button>
+    <div class="qv-body">
+        <div class="art" data-qv-art></div>
+        <div class="qv-info">
+            <p class="kicker" data-qv-cat></p>
+            <h2 data-qv-name></h2>
+            <p class="muted" data-qv-desc></p>
+            <p class="price-xl" data-qv-price></p>
+            <p class="month" data-qv-month></p>
+            <div class="stock">
+                <div class="stock-row"><span>Остаток на складе</span><span data-qv-stock></span></div>
+                <div class="stock-bar"><span data-qv-bar></span></div>
+            </div>
+            <form class="buy-row buy" data-qv-form hidden>
+                <input type="hidden" name="productId" data-qv-id>
+                <div class="stepper" data-stepper>
+                    <button type="button" data-step="-1" aria-label="Меньше">−</button>
+                    <input type="number" name="quantity" min="1" value="1" aria-label="Количество" data-qv-qty>
+                    <button type="button" data-step="1" aria-label="Больше">+</button>
+                </div>
+                <button class="btn brand" type="submit">В корзину</button>
+            </form>
+            <a class="btn full" href="/login" data-qv-login hidden>Войти, чтобы купить</a>
+            <a class="more" href="#" data-qv-link>Подробнее о товаре →</a>
+        </div>
+    </div>
+</dialog>
+
+<dialog class="drawer" data-fav-drawer aria-label="Избранное">
+    <div class="drawer-head">
+        <h2>Избранное</h2>
+        <button type="button" class="dialog-close" data-dialog-close aria-label="Закрыть"><svg th:replace="~{fragments/icons :: close}"></svg></button>
+    </div>
+    <div class="drawer-list" data-fav-list></div>
+    <template data-fav-empty>
+        <div class="drawer-empty">
+            <svg th:replace="~{fragments/art :: emptyFav}"></svg>
+            <p><strong>Пока пусто</strong></p>
+            <p>Нажмите на сердечко у товара — он сохранится здесь, даже без входа.</p>
+        </div>
+    </template>
+</dialog>
+</th:block>
+
 <nav th:fragment="tabbar" class="tabbar" aria-label="Нижнее меню">
-    <a class="tab" href="/">Главная</a>
-    <button type="button" class="tab" data-catalog-toggle>Каталог</button>
-    <a class="tab" href="/cart" data-cart-link sec:authorize="hasRole('CUSTOMER')">
-        Корзина
+    <a class="tab" href="/" data-tab="/"><svg th:replace="~{fragments/icons :: home}"></svg>Главная</a>
+    <button type="button" class="tab" data-catalog-toggle><svg th:replace="~{fragments/icons :: grid}"></svg>Каталог</button>
+    <button type="button" class="tab" data-fav-open><svg th:replace="~{fragments/icons :: heart}"></svg>Избранное<span class="badge" data-fav-count hidden>0</span></button>
+    <a class="tab" href="/cart" data-cart-link data-tab="/cart" sec:authorize="hasRole('CUSTOMER')">
+        <svg th:replace="~{fragments/icons :: cart}"></svg>Корзина
         <span class="badge" th:if="${cartCount > 0}" th:text="${cartCount}">0</span>
     </a>
-    <a class="tab" href="/login" sec:authorize="!isAuthenticated()">Войти</a>
-    <a class="tab" href="/profile" sec:authorize="isAuthenticated()">Профиль</a>
-    <a class="tab" href="/admin" sec:authorize="hasAnyRole('ADMIN','MANAGER','WAREHOUSE')">Админка</a>
+    <a class="tab" href="/admin" data-tab="/admin" sec:authorize="hasAnyRole('ADMIN','MANAGER','WAREHOUSE')"><svg th:replace="~{fragments/icons :: admin}"></svg>Админка</a>
+    <a class="tab" href="/login" data-tab="/login" sec:authorize="!isAuthenticated()"><svg th:replace="~{fragments/icons :: user}"></svg>Войти</a>
+    <a class="tab" href="/profile" data-tab="/profile" sec:authorize="isAuthenticated()"><svg th:replace="~{fragments/icons :: user}"></svg>Профиль</a>
 </nav>
 </body>
 </html>

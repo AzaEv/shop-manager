@@ -1,25 +1,31 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="page">
+<main class="page" id="main">
     <div class="container narrow">
         <div th:replace="~{fragments/layout :: flash}"></div>
-        <p><a class="back" href="/orders">← К заказам</a></p>
+        <a class="back" href="/orders"><svg th:replace="~{fragments/icons :: arrowLeft}"></svg>К заказам</a>
         <div class="section-head">
-            <h1 th:text="'Заказ № ' + ${order.id}"></h1>
+            <div>
+                <p class="kicker" th:text="${@ui.when(order.createdAt)}">Дата</p>
+                <h1 th:text="'Заказ № ' + ${order.id}"></h1>
+            </div>
             <span class="status" th:classappend="${'status-' + order.status}" th:text="${order.status.title}"></span>
         </div>
-        <div class="steps" th:if="${order.status.name() != 'CANCELLED'}">
+        <div class="track" th:if="${order.status.name() != 'CANCELLED'}"
+             th:style="'--p:' + ${(order.status.step - 1) / 4.0}">
             <div th:each="label, stat : ${ {'Новый','Оплачен','Собирается','В пути','Доставлен'} }"
-                 th:classappend="${stat.count <= order.status.step} ? 'done'">
+                 th:with="done=${stat.count < order.status.step or order.status.name() == 'DELIVERED'}"
+                 th:classappend="${done ? 'done' : (stat.count == order.status.step ? 'now' : '')}">
+                <i th:text="${done ? '✓' : stat.count}">1</i>
                 <span th:text="${label}"></span>
             </div>
         </div>
+        <p class="flash err" th:if="${order.status.name() == 'CANCELLED'}">Заказ отменён. Товар вернулся на склад.</p>
         <div class="panel">
-            <p th:text="'Адрес: ' + ${order.address}"></p>
-            <p class="muted" th:text="${@ui.when(order.createdAt)}"></p>
+            <p><strong>Адрес:</strong> <span th:text="${order.address}"></span></p>
             <div class="table-wrap">
                 <table>
                     <thead>
@@ -28,7 +34,7 @@
                     <tbody>
                     <tr th:each="item : ${order.items}">
                         <td th:text="${item.productName}"></td>
-                        <td th:text="${item.sku}"></td>
+                        <td class="muted" th:text="${item.sku}"></td>
                         <td th:text="${@ui.rub(item.unitPrice)}"></td>
                         <td th:text="${item.quantity}"></td>
                         <td th:text="${@ui.rub(@ui.line(item.unitPrice, item.quantity))}"></td>
@@ -36,12 +42,15 @@
                     </tbody>
                 </table>
             </div>
-            <p class="price-xl" th:text="${@ui.rub(order.total)}"></p>
-            <p class="actions">
-                <a class="btn" th:if="${order.status.name() == 'NEW'}" th:href="@{/orders/{id}/pay(id=${order.id})}">Оплатить</a>
+            <div class="total-row">
+                <span class="muted">Сумма заказа</span>
+                <p class="total" th:text="${@ui.rub(order.total)}"></p>
+            </div>
+            <div class="actions">
+                <a class="btn brand" th:if="${order.status.name() == 'NEW'}" th:href="@{/orders/{id}/pay(id=${order.id})}">Оплатить</a>
                 <a class="btn" th:if="${order.status.name() != 'NEW' and order.status.name() != 'CANCELLED'}"
-                   th:href="@{/orders/{id}/receipt(id=${order.id})}">Чек</a>
-            </p>
+                   th:href="@{/orders/{id}/receipt(id=${order.id})}"><svg th:replace="~{fragments/icons :: receipt}"></svg>Чек</a>
+            </div>
             <h2>История</h2>
             <ol class="timeline">
                 <li th:each="entry : ${order.history}">

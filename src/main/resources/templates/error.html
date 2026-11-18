@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(${status == 404 ? 'Страница не найдена' : 'Ошибка'})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="page" id="main">
+    <div class="container error-page">
+        <svg th:replace="~{fragments/art :: notFound}"></svg>
+        <p class="kicker" th:text="'Код ' + ${status}">Код 404</p>
+        <h1 th:text="${status == 404 ? 'Такой страницы нет' : (status == 403 ? 'Сюда нельзя' : 'Что-то пошло не так')}">Такой страницы нет</h1>
+        <p class="muted" th:text="${status == 404 ? 'Возможно, ссылка устарела или товар убрали из каталога.' : (status == 403 ? 'Для этого раздела нужна другая роль. Войдите под подходящим аккаунтом.' : 'Мы уже записали ошибку. Попробуйте обновить страницу чуть позже.')}"></p>
+        <div class="actions" style="justify-content:center">
+            <a class="btn brand" href="/">На главную</a>
+            <a class="btn ghost" href="/login" th:if="${status == 403}">Сменить аккаунт</a>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<nav th:replace="~{fragments/layout :: tabbar}"></nav>
+</body>
+</html>

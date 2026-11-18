@@ -1,31 +1,46 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<article th:fragment="card(product, index)" class="pcard" th:style="'--i:' + ${index}">
-    <a class="art" th:classappend="${'tone-' + @ui.tone(product.category.slug)}"
-       th:href="@{/products/{id}(id=${product.id})}" th:aria-label="${product.name}">
-        <img th:if="${@ui.photo(product.sku) != null}" th:src="@{${@ui.photo(product.sku)}}" th:alt="${product.name}">
-        <span th:if="${@ui.photo(product.sku) == null}" th:text="${@ui.emoji(product.category.slug)}">🛍️</span>
-    </a>
-    <a class="name" th:href="@{/products/{id}(id=${product.id})}" th:text="${product.name}">Товар</a>
-    <div class="price-row" th:text="${@ui.rub(product.price)}">0 ₽</div>
-    <p class="month" th:text="'от ' + ${@ui.monthly(product.price)} + ' / мес'">от 0 ₽ / мес</p>
-    <p class="low" th:if="${product.stock > 0 and product.stock < 5}" th:text="'Осталось ' + ${product.stock} + ' шт.'"></p>
-    <div class="card-actions">
-        <form class="buy card-buy" th:if="${product.active and product.stock > 0}" sec:authorize="hasRole('CUSTOMER')"
+<article th:fragment="card(product, index)" class="pcard" data-reveal th:style="'--i:' + ${index}"
+         th:with="photo=${@ui.photo(product.sku)}, available=${product.active and product.stock > 0}"
+         th:attr="data-product=${product.id}, data-name=${product.name}, data-sku=${product.sku},
+                  data-price=${@ui.rub(product.price)}, data-month=${'от ' + @ui.monthly(product.price) + ' / мес'},
+                  data-desc=${product.description}, data-stock=${product.stock}, data-active=${product.active},
+                  data-cat=${product.category.name}, data-photo=${photo}, data-emoji=${@ui.emoji(product.category.slug)},
+                  data-url=@{/products/{id}(id=${product.id})}">
+    <div class="tags">
+        <span class="tag low" th:if="${available and product.stock < 5}" th:text="'Осталось ' + ${product.stock}"></span>
+        <span class="tag out" th:if="${!available}">Нет в наличии</span>
+    </div>
+    <button type="button" class="fav-btn" data-fav aria-pressed="false" th:aria-label="'В избранное: ' + ${product.name}">
+        <svg th:replace="~{fragments/icons :: heart}"></svg>
+    </button>
+    <div class="art">
+        <img th:if="${photo != null}" th:src="@{${photo}}" th:alt="${product.name}" loading="lazy" decoding="async" data-lazy width="512" height="512">
+        <span th:if="${photo == null}" th:text="${@ui.emoji(product.category.slug)}">🛍️</span>
+        <button type="button" class="quick-btn" data-quick><svg th:replace="~{fragments/icons :: eye}"></svg>Быстрый просмотр</button>
+    </div>
+    <div class="pcard-body">
+        <span class="pcard-cat" th:text="${product.category.name}">Категория</span>
+        <a class="name" th:href="@{/products/{id}(id=${product.id})}" th:text="${product.name}">Товар</a>
+        <p class="desc" th:text="${@ui.excerpt(product.description)}"></p>
+    </div>
+    <div class="pcard-foot">
+        <div>
+            <div class="price" th:text="${@ui.rub(product.price)}">0 ₽</div>
+            <p class="month" th:text="'от ' + ${@ui.monthly(product.price)} + ' / мес'">от 0 ₽ / мес</p>
+        </div>
+        <form class="buy" th:if="${available}" sec:authorize="hasRole('CUSTOMER')"
               th:action="@{/cart/items}" method="post" th:attr="data-product-name=${product.name}">
             <input type="hidden" name="productId" th:value="${product.id}">
-            <div class="stepper" data-stepper>
-                <button type="button" data-step="-1" aria-label="Меньше">−</button>
-                <input type="number" name="quantity" min="1" th:max="${product.stock}" value="1" aria-label="Количество">
-                <button type="button" data-step="1" aria-label="Больше">+</button>
-            </div>
-            <button class="btn sm full" type="submit">В корзину</button>
+            <input type="hidden" name="quantity" value="1">
+            <button class="add-btn" type="submit" th:title="'В корзину: ' + ${product.name}">
+                <span class="sr-only">В корзину</span>
+                <svg th:replace="~{fragments/icons :: plus}"></svg>
+            </button>
         </form>
-        <p class="muted tiny" th:if="${!product.active or product.stock < 1}">Нет в наличии</p>
-        <a class="btn ghost sm full" href="/login" sec:authorize="!isAuthenticated()"
-           th:if="${product.active and product.stock > 0}">Войти, чтобы купить</a>
-        <p class="muted tiny" sec:authorize="isAuthenticated() and !hasRole('CUSTOMER')">Только для покупателей</p>
+        <a class="login-link" href="/login" sec:authorize="!isAuthenticated()" th:if="${available}">Войти, чтобы купить</a>
+        <span class="note" sec:authorize="isAuthenticated() and !hasRole('CUSTOMER')">Только для покупателей</span>
     </div>
 </article>
 </body>

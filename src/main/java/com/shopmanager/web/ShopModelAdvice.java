@@ -1,7 +1,9 @@
 package com.shopmanager.web;
 
+import org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -13,13 +15,16 @@ import com.shopmanager.customer.Customer;
 import com.shopmanager.customer.CustomerService;
 import com.shopmanager.customer.Role;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @ControllerAdvice(assignableTypes = {
         ShopWebController.class,
         AuthWebController.class,
         CartWebController.class,
         OrderWebController.class,
         AdminWebController.class,
-        ProfileWebController.class
+        ProfileWebController.class,
+        BasicErrorController.class
 })
 public class ShopModelAdvice {
 
@@ -35,7 +40,10 @@ public class ShopModelAdvice {
     }
 
     @ModelAttribute
-    public void storefront(Model model, Authentication authentication) {
+    public void storefront(Model model, Authentication authentication, HttpServletRequest request) {
+        if (request.getAttribute(CsrfToken.class.getName()) instanceof CsrfToken csrfToken) {
+            csrfToken.getToken();
+        }
         Customer account = null;
         int cartCount = 0;
         if (isUser(authentication)) {

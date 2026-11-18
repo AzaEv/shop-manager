@@ -8,3 +8,6 @@ Pexels License (https://www.pexels.com/license/): hero/home.jpg
 Товары в img/products — отдельные кадры: предмет целиком, фон того же сиреневого тона, что и карточка.
 
 Шрифт чека: DejaVu Sans 2.37 (лицензия Bitstream Vera / DejaVu), файл fonts/DejaVuSans.ttf.
+
+Шрифт витрины: Manrope (SIL Open Font License 1.1), файлы static/fonts/manrope-*.woff2.
+Иллюстрации пустых состояний и страницы 404 — собственные SVG в templates/fragments/art.html.

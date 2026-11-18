@@ -3,10 +3,10 @@
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="page">
+<main class="page" id="main">
     <div class="container narrow">
         <div th:replace="~{fragments/layout :: flash}"></div>
-        <form class="panel" th:action="@{/profile}" method="post">
+        <form class="panel" th:action="@{/profile}" method="post" data-reveal>
             <div class="profile-head">
                 <span class="avatar lg" th:text="${@ui.initial(customer.name)}">N</span>
                 <div>
@@ -33,13 +33,15 @@
             <p class="muted">Текущий пароль нужен только если меняете email или задаёте новый пароль.</p>
             <div class="grid-2">
                 <label class="field">Текущий пароль
-                    <input type="password" name="currentPassword" autocomplete="current-password">
+                    <span class="pw"><input type="password" name="currentPassword" autocomplete="current-password"><button type="button" data-pw-toggle aria-label="Показать пароль"><svg th:replace="~{fragments/icons :: eye}"></svg></button></span>
                 </label>
                 <label class="field">Новый пароль
-                    <input type="password" name="newPassword" minlength="6" autocomplete="new-password" placeholder="Не короче 6 символов">
+                    <span class="pw"><input type="password" name="newPassword" minlength="6" autocomplete="new-password" placeholder="Не короче 6 символов" data-strength-input><button type="button" data-pw-toggle aria-label="Показать пароль"><svg th:replace="~{fragments/icons :: eye}"></svg></button></span>
+                    <span class="strength" data-strength data-score="0" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                    <span class="strength-label" data-strength-label></span>
                 </label>
             </div>
-            <button class="btn" type="submit">Сохранить</button>
+            <button class="btn brand" type="submit">Сохранить изменения</button>
         </form>
     </div>
 </main>

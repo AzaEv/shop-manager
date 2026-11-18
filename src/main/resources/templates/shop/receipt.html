@@ -1,12 +1,25 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
-<main class="page">
+<main class="page" id="main">
     <div class="container narrow">
-        <div th:replace="~{fragments/layout :: flash}"></div>
-        <p><a class="back" th:href="@{/orders/{id}(id=${order.id})}">← К заказу</a></p>
+        <p class="flash err" th:if="${error}" th:text="${error}" role="alert"></p>
+        <a class="back" th:href="@{/orders/{id}(id=${order.id})}"><svg th:replace="~{fragments/icons :: arrowLeft}"></svg>К заказу</a>
+        <ol class="flow">
+            <li class="done"><span>Корзина</span></li>
+            <li class="done"><span>Доставка</span></li>
+            <li class="done"><span>Оплата</span></li>
+            <li class="now"><span>Готово</span></li>
+        </ol>
+        <div class="success-banner" th:attr="data-confetti=${'order-' + order.id}">
+            <svg th:replace="~{fragments/icons :: check}"></svg>
+            <div>
+                <div>Оплата прошла</div>
+                <small class="muted">Заказ передан в работу. Статус можно отслеживать в разделе «Мои заказы».</small>
+            </div>
+        </div>
         <article class="receipt">
             <div class="receipt-head">
                 <div>
@@ -15,22 +28,22 @@
                     <p class="muted" th:text="${@ui.when(order.createdAt)}"></p>
                 </div>
                 <svg class="stamp" viewBox="0 0 200 200" role="img" aria-label="Печать магазина nova">
-                    <circle cx="100" cy="100" r="92" fill="#f7f4fc" stroke="#6d28d9" stroke-width="7"/>
-                    <circle cx="100" cy="100" r="76" fill="none" stroke="#6d28d9" stroke-width="2"/>
-                    <text x="100" y="110" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="32" font-weight="700" fill="#5b21b6">NOVA</text>
+                    <circle cx="100" cy="100" r="92" fill="none" stroke="#6a45ff" stroke-width="7"/>
+                    <circle cx="100" cy="100" r="76" fill="none" stroke="#6a45ff" stroke-width="2"/>
+                    <text x="100" y="110" text-anchor="middle" font-family="Manrope, Segoe UI, sans-serif" font-size="32" font-weight="800" fill="#6a45ff">NOVA</text>
                     <defs>
                         <path id="stamp-top" d="M28,104 a72,72 0 1,1 144,0"/>
                         <path id="stamp-bottom" d="M36,112 a64,64 0 1,0 128,0"/>
                     </defs>
-                    <text fill="#5b21b6" font-size="13" font-family="Segoe UI, sans-serif" letter-spacing="1.5">
+                    <text fill="#6a45ff" font-size="13" font-weight="700" font-family="Manrope, Segoe UI, sans-serif" letter-spacing="1.5">
                         <textPath href="#stamp-top" startOffset="12%">МАГАЗИН ТЕХНИКИ</textPath>
                     </text>
-                    <text fill="#5b21b6" font-size="13" font-family="Segoe UI, sans-serif" letter-spacing="2">
+                    <text fill="#6a45ff" font-size="13" font-weight="700" font-family="Manrope, Segoe UI, sans-serif" letter-spacing="2">
                         <textPath href="#stamp-bottom" startOffset="30%">ОПЛАЧЕНО</textPath>
                     </text>
                 </svg>
             </div>
-            <p th:text="${order.customer.name}"></p>
+            <p><strong th:text="${order.customer.name}"></strong></p>
             <p class="muted" th:text="${order.customer.email}"></p>
             <p th:text="'Адрес: ' + ${order.address}"></p>
             <div class="table-wrap">
@@ -51,9 +64,16 @@
                     </tbody>
                 </table>
             </div>
-            <p class="price-xl" th:text="${@ui.rub(order.total)}"></p>
-            <p class="muted">Оплата прошла в учебной симуляции. Карта не сохранялась.</p>
-            <a class="btn" th:href="@{/orders/{id}/receipt.pdf(id=${order.id})}">Скачать чек PDF</a>
+            <div class="total-row">
+                <span class="muted">Оплачено</span>
+                <p class="total" th:text="${@ui.rub(order.total)}"></p>
+            </div>
+            <p class="muted tiny">Оплата прошла в учебной симуляции. Карта не сохранялась.</p>
+            <div class="actions">
+                <a class="btn brand" th:href="@{/orders/{id}/receipt.pdf(id=${order.id})}"><svg th:replace="~{fragments/icons :: download}"></svg>Скачать чек PDF</a>
+                <button type="button" class="btn ghost" onclick="window.print()">Распечатать</button>
+                <a class="btn soft" href="/">Вернуться в магазин</a>
+            </div>
         </article>
         <iframe class="receipt-download" title="Загрузка чека" th:src="@{/orders/{id}/receipt.pdf(id=${order.id})}"></iframe>
     </div>
