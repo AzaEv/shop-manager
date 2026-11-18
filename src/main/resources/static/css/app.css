@@ -229,7 +229,7 @@ p { margin: 0 0 .65em; }
 .catalog-btn[aria-expanded="true"] .burger i:nth-child(2) { opacity: 0; }
 .catalog-btn[aria-expanded="true"] .burger i:nth-child(3) { transform: translateY(-5px) rotate(-45deg); }
 
-.search { position: relative; flex: 1; max-width: 520px; margin-left: auto; }
+.search { position: relative; flex: 1; min-width: 0; max-width: 520px; margin-left: auto; }
 .search-field {
     display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 8px 0 16px;
     border-radius: 999px; background: var(--surface-2); border: 1.5px solid transparent;
@@ -577,6 +577,7 @@ p { margin: 0 0 .65em; }
 .zoom .fav-btn { top: 20px; right: 20px; width: 48px; height: 48px; }
 .zoom-hint { position: absolute; left: 20px; bottom: 20px; padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, .85); color: #15121c; font-size: 12.5px; font-weight: 700; transition: opacity .3s; }
 .zoom.is-zoom .zoom-hint { opacity: 0; }
+@media (hover: none) { .zoom-hint { display: none; } }
 .buybox h1 { font-size: clamp(32px, 4vw, 52px); letter-spacing: -.04em; margin-bottom: 10px; }
 .buybox .lead { font-size: 18px; color: var(--ink-2); }
 .price-xl { font-size: clamp(30px, 3.4vw, 40px); font-weight: 800; letter-spacing: -.03em; margin: 18px 0 4px; }
@@ -958,7 +959,7 @@ dialog[open]::backdrop { animation: fade .3s; }
     :root { --header-h: 60px; }
     .container { width: calc(100% - 32px); }
     .bar { gap: 6px; }
-    .catalog-btn span:not(.burger), .header-actions .hide-sm, .search kbd { display: none; }
+    .catalog-btn span:not(.burger), .header-actions .hide-sm, .header-actions > .btn, .search kbd { display: none; }
     .catalog-btn { width: 44px; height: 44px; flex: none; padding: 0; justify-content: center; }
     .logo-word { display: none; }
     .search { max-width: none; }
