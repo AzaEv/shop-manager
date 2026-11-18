@@ -11,7 +11,7 @@
         (function () {
             var root = document.documentElement, theme = null;
             root.classList.add("js");
-            try { theme = localStorage.getItem("nova-theme"); } catch (e) {}
+            try { theme = (localStorage.getItem("nova-theme") || "").replace(/"/g, ""); } catch (e) {}
             if (theme !== "light" && theme !== "dark") {
                 theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
             }

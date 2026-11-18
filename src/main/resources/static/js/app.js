@@ -96,7 +96,11 @@
     const root = document.documentElement;
     function applyTheme(theme) {
         root.setAttribute("data-theme", theme);
-        store.set("nova-theme", theme);
+        try {
+            window.localStorage.setItem("nova-theme", theme);
+        } catch (e) {
+            return;
+        }
     }
     document.addEventListener("click", (event) => {
         const toggle = event.target.closest("[data-theme-toggle]");
